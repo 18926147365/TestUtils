@@ -1,19 +1,49 @@
+package utils;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author 李浩铭
- * @date 2020/7/3 10:28
+ * @date 2020/7/7 17:22
  * @descroption
  */
-public class Test {
+public class CopyUtils {
 
-    public static void main(String[] args) {
-        System.out.println(getSysClipboardText());
+
+    private static final String logFile="";
+    private static final long sleepTime=2000l;
+
+    public static List<String> cacheList=new ArrayList<String>();
+    private static long cacheSize=50;//缓存长度
+    private static String lastStr="";
+
+
+    public static void listenerCopy()  {
+
+        try {
+            while (true){
+                Thread.sleep(sleepTime);
+                addCache(getSysClipboardText());
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
+
+    private static void addCache(String text){
+        if(lastStr.equals(text)){
+            return;
+        }
+        lastStr=new String(text);
+        cacheList.add(text);
+    }
+    
+
 
     /**
      *1. 从剪切板获得文字。
@@ -38,5 +68,4 @@ public class Test {
 
         return ret;
     }
-
 }
