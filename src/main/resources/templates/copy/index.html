@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>粘贴板11</title>
+</head>
+<script src="/common/js/jquery.min.js"></script>
+<script src="/common/js/template-web.js"></script>
+<style>
+    .content{
+        cursor: pointer;
+    }
+    .content:hover{
+        background-color: #f7f7f7;
+    }
+    #list{
+        margin-left: 10px;
+    }
+</style>
+<body>
+    <div>
+        <button id="clean">clean all</button>
+    </div>
+    <div id="list"  >
+
+
+    </div>
+</body>
+
+<script type="text/html" id="list_art">
+    {{each}}
+        <p class="content" >{{$value}}</p>
+    {{/each}}
+   <p></p>
+</script>
+
+<script>
+    function mytest(){
+        var selection = window.getSelection();
+        console.log(selection)
+        selection.extentNode.parentNode.remove();
+    }
+    // 键盘控制
+    var keyEvent = (function () {
+        document.onkeydown = function (e) {
+            if (e.keyCode === 38) { // up rotate
+                mytest();
+
+            }
+        }
+    })();
+
+    $(function(){
+        $("#list").on("dblclick",".content",function(){
+            var selection = window.getSelection();
+            var range = document.createRange();
+            range.selectNodeContents($(this)[0]);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        })
+
+        $("#clean").click(function(){
+            $("#list").empty();
+            $.ajax({
+                url:"/copy/clean",
+                success:function(data){
+                }
+            })
+
+        })
+
+        $.ajax({
+            url:"/copy/getCopyList",
+            dataType:"json",
+            success:function(data){
+                if(data.code==0){
+
+                    var list=data.data;
+                    var listSort=new Array();
+                    for(var i=list.length-1;i>=0;i--){
+                        listSort.push(list[i]);
+                    }
+
+                    var html=template("list_art",listSort);
+                    $("#list").html(html);
+
+                }
+            }
+        })
+    })
+</script>
+</html>

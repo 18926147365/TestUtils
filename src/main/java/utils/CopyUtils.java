@@ -1,5 +1,7 @@
 package utils;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -36,8 +38,15 @@ public class CopyUtils {
     }
 
     private static void addCache(String text){
+        if(StringUtils.isBlank(text)){
+            return;
+        }
         if(lastStr.equals(text)){
             return;
+        }
+        //若存在则删除旧数据
+        if(cacheList.contains(text)){
+            cacheList.remove(text);
         }
         lastStr=new String(text);
         cacheList.add(text);

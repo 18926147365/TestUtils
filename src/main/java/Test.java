@@ -1,8 +1,9 @@
 
-import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
+import bean.User;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * @author 李浩铭
@@ -12,31 +13,16 @@ import java.awt.datatransfer.Transferable;
 public class Test {
 
     public static void main(String[] args) {
-        System.out.println(getSysClipboardText());
+        List<String> list=new ArrayList<String>();
+        list.add("123");
+        if(list.contains("123")){
+            list.remove("123");
+        }
+        System.out.println(list);
     }
 
     /**
      *1. 从剪切板获得文字。
      */
-    public static String getSysClipboardText() {
-        String ret = "";
-        Clipboard sysClip = Toolkit.getDefaultToolkit().getSystemClipboard();
-        // 获取剪切板中的内容
-        Transferable clipTf = sysClip.getContents(null);
-
-        if (clipTf != null) {
-            // 检查内容是否是文本类型
-            if (clipTf.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-                try {
-                    ret = (String) clipTf
-                            .getTransferData(DataFlavor.stringFlavor);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        return ret;
-    }
 
 }
