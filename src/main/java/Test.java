@@ -1,8 +1,12 @@
 
 import bean.User;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 
 /**
@@ -12,17 +16,42 @@ import java.util.List;
  */
 public class Test {
 
+    private static String cache="";
+
     public static void main(String[] args) {
-        List<String> list=new ArrayList<String>();
-        list.add("123");
-        if(list.contains("123")){
-            list.remove("123");
-        }
-        System.out.println(list);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getName1();
+
+            }
+        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getName();
+
+            }
+        }).start();
+
     }
 
-    /**
-     *1. 从剪切板获得文字。
-     */
+    static Boolean lock=false;
+    static Boolean lock1=false;
+    private static void getName() {
+        synchronized ("key"){
+            System.out.println("1");
+        }
+    }
 
+    private static void getName1() {
+        synchronized ("key"){
+            try {
+                Thread.sleep(1500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("2");
+        }
+    }
 }

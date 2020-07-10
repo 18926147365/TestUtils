@@ -43,5 +43,12 @@ public class CopyController {
        return "success";
     }
 
+    @RequestMapping("/getContent")
+    public Result getContent(){
+        Result result=new Result();
+        result.setData(CopyUtils.getSysClipboardText());
+        result.setCode(0);
+        return result;
+    }
 
 }
