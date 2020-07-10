@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>粘贴板</title>
+    <title>clipboard</title>
 </head>
 <script src="/common/js/jquery.min.js"></script>
 <script src="/common/js/template-web.js"></script>
@@ -19,7 +19,11 @@
 </style>
 <body>
     <div>
+        <input type="text"  id="keywork" oninput="changeKeyWork()"/>
+        <button id="cla" style="width: 50px">X</button>
         <button id="clean">clean all</button>
+
+
     </div>
     <div id="list"  >
 
@@ -40,6 +44,39 @@
         console.log(selection)
         selection.extentNode.parentNode.remove();
     }
+
+    function changeKeyWork(){
+        var keywork= $("#keywork").val();
+        $("#list .content").show();
+        $("#list .content span").css("color","black");
+        if(keywork==''){
+            return;
+        }
+
+        var list=$("#list .content");
+        list.each(function(i,k){
+            var str=$(k).text();
+            if(str.indexOf(keywork)!=-1){
+                var html=replaceColorHtml(keywork,str,0);
+                $(k).html(html);
+            }else{
+                $(k).hide()
+            }
+        })
+    }
+
+
+
+    function replaceColorHtml(keywork,str,index){
+        var indexs=str.indexOf(keywork,index);
+        var end=indexs+keywork.length;
+        var str1=(str.substr(0,indexs))
+        var str2=(str.substr(end,str.length));
+
+        return str1+"<span style='color:red'>"+keywork+"</span>"+str2;
+    }
+
+
     // 键盘控制
     var keyEvent = (function () {
         document.onkeydown = function (e) {
@@ -50,7 +87,10 @@
         }
     })();
 
+
     $(function(){
+
+
         $("#list").on("dblclick",".content",function(){
             var selection = window.getSelection();
             var range = document.createRange();
@@ -58,6 +98,13 @@
             selection.removeAllRanges();
             selection.addRange(range);
         })
+
+
+        $("#cla").click(function(){
+            $("#keywork").val("");
+            changeKeyWork();
+        })
+
 
         $("#clean").click(function(){
             $("#list").empty();
