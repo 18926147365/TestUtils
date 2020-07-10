@@ -466,16 +466,16 @@
         var timestamp = new Date().getTime();
         saveAs(blob, "format." + timestamp + ".json");
     });
+
     $('.copy').click(function () {
-        //$.msg("成功复制到粘贴板","color:#00D69C;");
+
         // $(this).tooltip('toggle')
         //       .attr('data-original-title', "复制成功！")
         //       .tooltip('fixTitle')
         //       .tooltip('toggle');
     });
     var clipboard = new Clipboard('.copy');
-    $('#json-src').keyup();
-	$("#json-src").focus();
+    $("#json-src").focus();
     //拖拽
     var totalWidth = $(window).outerWidth();
     var forbidenWidth = totalWidth - 400;
