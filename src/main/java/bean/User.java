@@ -1,5 +1,6 @@
 package bean;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -9,9 +10,26 @@ import java.util.Date;
  */
 public class User {
 
+    public User(){}
+
+    public User(Integer id,String name,double money){
+        this.id=id;
+        this.name=name;
+        this.money=BigDecimal.valueOf(money);
+    }
     private Integer id;
 
     private String name;
+
+    private BigDecimal money;
+
+    public BigDecimal getMoney() {
+        return money;
+    }
+
+    public void setMoney(BigDecimal money) {
+        this.money = money;
+    }
 
     public Integer getId() {
         return id;

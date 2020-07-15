@@ -1,5 +1,6 @@
 package utils;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -11,13 +12,24 @@ import org.springframework.context.annotation.ComponentScans;
  * @descroption
  */
 @SpringBootApplication
-@ComponentScan("controller")
+@ComponentScan({"controller","service"})
+@MapperScan("mapper")
 public class Application {
 
     public static void main(String[] args) {
-
         System.setProperty("java.awt.headless", "false");
-       SpringApplication.run(Application.class,args);
-       CopyUtils.listenerCopy();
+        SpringApplication.run(Application.class, args);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                CopyUtils.listenerCopy();
+            }
+        }).start();
+
     }
 }
