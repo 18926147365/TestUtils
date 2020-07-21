@@ -1,11 +1,16 @@
+
 import bean.User;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.StopWatch;
 
-import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author 李浩铭
@@ -16,45 +21,37 @@ public class Test {
 
 
 
-    public static class Count implements Callable<Integer> {
-
-        @Override
-        public Integer call() throws Exception {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return 10;
-        }
-    }
-
     public static void main(String[] args) throws Exception {
 
+        StopWatch stopWatch=new StopWatch();
+        stopWatch.start();
+        int size=100000;
+        CountDownLatch countDownLatch=new CountDownLatch(size);
 
-        FutureTask<Integer> task = new FutureTask<Integer>(new Count());
-        new Thread(task).start();
-        int num=task.get();
-        String f=take();
-        System.out.println("!@3123123");
-        int num=task.get();
-        System.out.println(num+"人点了"+f);
-
-    }
+        ExecutorService executorService=Executors.newFixedThreadPool(100);
+        for (int i = 0; i < size; i++) {
 
 
-    public static String take(){
-        try {
-            Thread.sleep(3000);//点餐人选餐花费时间
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("123123");
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    countDownLatch.countDown();
+                }
+            });
+
         }
-        return "牛肉";
+
+        countDownLatch.await();
+        stopWatch.stop();
+        System.out.println(stopWatch.getTotalTimeSeconds());
+
     }
-
-
-
-
 
 
 }

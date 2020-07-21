@@ -1,22 +1,21 @@
 package controller;
 
 import bean.User;
+import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import service.TestService;
+import system.LoggerProxy;
 import utils.CsvUtils;
-import utils.JavaMailUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author 李浩铭
@@ -25,8 +24,12 @@ import java.util.concurrent.CountDownLatch;
  */
 @RestController
 @RequestMapping("test")
+@Slf4j
 public class TestController {
     private static String str = "123123";
+
+
+
 
     @Autowired
     private UserMapper userMapper;
@@ -36,6 +39,7 @@ public class TestController {
 
     @RequestMapping("/report")
     public String report(HttpServletRequest request) throws Exception {
+
 
         String path = "D:/2.csv";
         File file = new File(path);
@@ -114,7 +118,7 @@ public class TestController {
     public String test(HttpServletRequest request) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        List<User> list1 = userMapper.queryMoneys(40000, 40000);
+        List<User> list1 = userMapper.queryMoneys(1, 1);
         stopWatch.stop();
         System.out.println("时间2花费：" + stopWatch.getTotalTimeSeconds() + "s");
         return "123";
@@ -123,9 +127,10 @@ public class TestController {
 
     @RequestMapping("/test1")
     public String test1() {
-        synchronized (str.intern()) {
-            System.out.println("123123");
-        }
+
+
+
+
 
         return "123";
     }

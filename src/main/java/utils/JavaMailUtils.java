@@ -19,19 +19,19 @@ public class JavaMailUtils {
 
     public static void main(String[] args) {
 //
-//        Mail mail=new Mail();
-//        mail.setUser("18926147365@163.com");
-//        mail.setPassword("GHBQMGRRMWUOKFUY");
-//        mail.setContent("测试");
-//        mail.setTitle("测试");
-//        mail.setToAddree("18926147365@163.com");
-//        mail.setFromAddress("18926147365@163.com");
-//        mail.setFromName("李浩铭");
-//        try {
-//            sendMail2(mail,new File("D:\\1.csv"));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
+        Mail mail=new Mail();
+        mail.setUser("18926147365@163.com");
+        mail.setPassword("GHBQMGRRMWUOKFUY");
+        mail.setContent("测试");
+        mail.setTitle("测试");
+        mail.setToAddree("18926147365@163.com");
+        mail.setFromAddress("18926147365@163.com");
+        mail.setFromName("李浩铭");
+        try {
+            sendMail2(mail,new File("D:\\1.csv"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
