@@ -23,6 +23,7 @@ public class Test {
 
     public static void main(String[] args) throws Exception {
         System.out.println(1);
+        System.out.println("提交2");
         StopWatch stopWatch=new StopWatch();
         stopWatch.start();
         int size=100000;
