@@ -22,7 +22,7 @@ public class Test {
 
 
     public static void main(String[] args) throws Exception {
-
+        System.out.println(1);
         StopWatch stopWatch=new StopWatch();
         stopWatch.start();
         int size=100000;
