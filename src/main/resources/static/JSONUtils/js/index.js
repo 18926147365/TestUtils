@@ -36,5 +36,64 @@ $(function(){
     })
 
 
+    $.ajax({
+        url:"/copy/getCopyJSONList",
+        dataType:"json",
+        success:function(data){
+            if(data.code==0){
+                var list=data.data;
+                var listSort=new Array();
+                for(var i=list.length-1;i>=0;i--){
+                    listSort.push(list[i]);
+                }
+                var html=template("houxuanlist",listSort);
+                $("#cus-footer").html(html)
+            }
+        }
+    })
+
+    $("#cus-footer").on("click",".overflows",function(){
+        $("#cus-footer .overflows").removeClass("active");
+        var text=$(this).text();
+        $(this).addClass("active");
+        $("#json-src").val(text);
+        $('#json-src').keyup();
+
+    })
+
+
 
 })
+
+function searchvalue(){
+    var val=($("#searchvalue").val());
+    var json=$("#json-src").val();
+    console.log(json);
+}
+
+function arraynumchange(){
+    var num=$(".arraynum").val();
+    var width=(num.length);
+    $(".arraynum").css("width",(width)*10+"px");
+}
+
+
+function validData(){
+    $("#searchvalue").val("");
+    $("#arraynumhide").hide();
+    var jsonStr=$("#json-src").val();
+    var json=JSON.parse(jsonStr);
+   if ((typeof json=='object')&& json.constructor==Array){
+       $("#arraynumhide").show();
+       $(".arraynum").val("");
+   }else if ((typeof json=='object')){
+       $("#arraynumhide").hide();
+
+   }
+
+
+
+
+
+
+}

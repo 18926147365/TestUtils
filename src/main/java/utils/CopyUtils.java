@@ -17,12 +17,15 @@ import java.util.List;
 public class CopyUtils {
 
 
+
     private static final String logFile="";
     private static final long sleepTime=2000l;
 
     public static List<String> cacheList=new ArrayList<String>();
     private static long cacheSize=50;//缓存长度
     private static String lastStr="";
+
+
 
 
     public static void listenerCopy()  {

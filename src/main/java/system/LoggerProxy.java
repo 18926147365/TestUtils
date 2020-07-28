@@ -20,6 +20,7 @@ public class LoggerProxy implements InvocationHandler {
         logger = LoggerFactory.getLogger(clazz);
     }
 
+
     public static Logger getLogger(Class<?> clazz) {
         LoggerProxy proxy = new LoggerProxy(clazz);
         return (Logger) Proxy.newProxyInstance(proxy.getClass().getClassLoader(), proxy.logger.getClass().getInterfaces(), proxy);
@@ -28,6 +29,7 @@ public class LoggerProxy implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
         Object invoke = method.invoke(logger, args);
         return invoke;
     }

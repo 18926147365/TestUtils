@@ -12,12 +12,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("page")
 public class IndexController {
 
-
-    @RequestMapping("/index/copy")
-    public String copyIndex(){
-        return  "copy/index";
-    }
-
     @RequestMapping("/index/json")
     public String jsonIndex(){
         return  "JSONUtils/index";

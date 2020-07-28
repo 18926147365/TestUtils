@@ -1,6 +1,9 @@
 package controller;
 
 import bean.Result;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +51,31 @@ public class CopyController {
         Result result=new Result();
         result.setData(CopyUtils.getSysClipboardText());
         result.setCode(0);
+        return result;
+    }
+
+    @RequestMapping("/getCopyJSONList")
+    public Result getCopyJSONList(){
+        List<String> list=CopyUtils.cacheList;
+        List<String> jsonList=new ArrayList<>();
+        for (String json : list) {
+            try{
+                JSONObject.parseObject(json);
+                jsonList.add(json);
+            }catch (Exception e){
+                try{
+                    JSONArray.parseArray(json);
+                    jsonList.add(json);
+                }catch (Exception e1){
+                    continue;
+                }
+            }
+
+        }
+        
+        Result result=new Result();
+        result.setCode(0);
+        result.setData(jsonList);
         return result;
     }
 
