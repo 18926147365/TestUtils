@@ -1,6 +1,7 @@
 package controller;
 
 import bean.User;
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author 李浩铭
@@ -106,12 +108,15 @@ public class TestController {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        List<User> list1 = userMapper.queryMoneys(40000, 2000);
+        List<User> list=new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            List<User> list1 = userMapper.queryMoneys(10*i, 2000);
+            list.addAll(list1);
+        }
         stopWatch.stop();
-        System.out.println("时间1花费：" + stopWatch.getTotalTimeSeconds() + "s");
 
 
-        return "12";
+        return JSONObject.toJSONString(list);
     }
 
     @RequestMapping("/test")
@@ -124,15 +129,25 @@ public class TestController {
         return "123";
     }
 
+    static ExecutorService pool = new ThreadPoolExecutor(1, 1, 5000,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(2),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.AbortPolicy());
+
 
     @RequestMapping("/test1")
-    public String test1() {
+    public String test1(HttpServletRequest request) {
 
+        List<User> list=new ArrayList<>();
+        for (int i = 0; i < 10000000; i++) {
+            User user=new User();
+            user.setId(i);
+            user.setName("name"+i);
+            list.add(user);
+        }
 
-
-
-
-        return "123";
+        return JSONObject.toJSONString(list);
     }
 
 }

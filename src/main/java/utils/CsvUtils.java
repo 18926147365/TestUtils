@@ -41,13 +41,14 @@ public class CsvUtils {
         fileWriter.close();
     }
 
+
+
     public static void main(String[] args) throws IOException {
         Object[] headers={"id","name"};
         List<Object[]> data=new ArrayList<>();
         Object[] data1={1,2};
-        data.add(data1);
+        data.add(data1);//
         writeCsv(headers,data,"D://1.csv");
-
     }
 
 
