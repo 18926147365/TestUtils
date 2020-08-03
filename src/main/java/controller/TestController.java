@@ -9,9 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisPool;
 import service.TestService;
 import system.LoggerProxy;
 import utils.CsvUtils;
+import utils.RedisLuaUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -38,6 +41,9 @@ public class TestController {
 
     @Autowired
     private TestService testService;
+
+    @Autowired
+    private RedisLuaUtils redisLuaUtils;
 
     @RequestMapping("/report")
     public String report(HttpServletRequest request) throws Exception {
@@ -138,16 +144,9 @@ public class TestController {
 
     @RequestMapping("/test1")
     public String test1(HttpServletRequest request) {
-
-        List<User> list=new ArrayList<>();
-        for (int i = 0; i < 10000000; i++) {
-            User user=new User();
-            user.setId(i);
-            user.setName("name"+i);
-            list.add(user);
-        }
-
-        return JSONObject.toJSONString(list);
+        String str= (String) redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.GETANDDEL, 1, "testss");
+        return str;
     }
+
 
 }

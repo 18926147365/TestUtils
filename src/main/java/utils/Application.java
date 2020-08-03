@@ -20,7 +20,7 @@ import java.util.Map;
  * @descroption
  */
 @SpringBootApplication
-@ComponentScan({"controller", "service"})
+@ComponentScan({"controller", "service","config","utils"})
 @MapperScan("mapper")
 @Slf4j
 public class Application {
@@ -40,7 +40,7 @@ public class Application {
             }
         });
         thread.setDaemon(true);
-        thread.start();
+//        thread.start();
 //
 
 
@@ -72,7 +72,7 @@ public class Application {
             }
         });
         thread1.setDaemon(true);
-        thread1.start();
+//        thread1.start();
 
 
     }
@@ -85,7 +85,7 @@ public class Application {
 
 
     static {
-        gcMBean = getGCMBean();
+//        gcMBean = getGCMBean();
 
     }
 

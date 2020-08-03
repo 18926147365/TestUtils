@@ -6,6 +6,8 @@ import utils.ThreadExecutorPool;
 
 import java.io.Console;
 import java.lang.management.ManagementFactory;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -29,8 +31,13 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws ParseException {
 
+        SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        Calendar calendar =  Calendar.getInstance();
+        calendar.setTime(sdf.parse("2020-07-25 00:01:00"));
+        System.out.println(calendar.get(Calendar.DAY_OF_MONTH));
 
 
     }
