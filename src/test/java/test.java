@@ -6,7 +6,9 @@ import com.google.common.base.Stopwatch;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisScriptingCommands;
+import javafx.scene.paint.Stop;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -17,6 +19,7 @@ import org.springframework.util.StopWatch;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import utils.Application;
+import utils.HttpClientUtil;
 import utils.RedisLuaUtils;
 
 import java.io.IOException;
@@ -25,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author 李浩铭
@@ -46,13 +50,18 @@ public class test {
     private JedisPool jedisPool;
 
 
+    static int total=1000;
     @Test
-    public void test1(){
-        String key="myNameTests";
-        Jedis jedis=jedisPool.getResource();
-        jedis.set(key,"123");
+    public void test1() throws InterruptedException {
+        redisLuaUtils.set("lotterycount1","5000");
+//        System.out.println(redisLuaUtils.incrBy("lottery:count:1"));
+    }
+    @Test
+    public void clients() throws InterruptedException {
+        String key="lotterycount1";
+        int prizeCount=100;//奖品总数
+        redisLuaUtils.set(key,prizeCount+"");
 
-        System.out.println(redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.GETANDDEL, 1, key));
     }
 
     @Test

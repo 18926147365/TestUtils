@@ -4,6 +4,7 @@ import bean.User;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StopWatch;
@@ -19,6 +20,7 @@ import utils.RedisLuaUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -135,18 +137,61 @@ public class TestController {
         return "123";
     }
 
-    static ExecutorService pool = new ThreadPoolExecutor(1, 1, 5000,
-            TimeUnit.MILLISECONDS,
-            new ArrayBlockingQueue<>(2),
-            Executors.defaultThreadFactory(),
-            new ThreadPoolExecutor.AbortPolicy());
-
 
     @RequestMapping("/test1")
-    public String test1(HttpServletRequest request) {
-        String str= (String) redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.GETANDDEL, 1, "testss");
-        return str;
+    public String test1(HttpServletRequest request,String name) {
+
+
+
+
+
+        return "123123";
     }
 
+    @RequestMapping("/seckill")
+    public String seckill() throws InterruptedException {
+        String lockKey="seckill:count1";
+        long result=redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.SECKILL,Long.class,lockKey,"-1");
+        if(result==-1){
+            System.out.println("没有了:"+redisLuaUtils.get(lockKey));
+        }
+        return "1";
+    }
+
+
+
+    @RequestMapping("/lottery")
+    public String lottery(HttpServletRequest request,String key,String name) throws InterruptedException {
+
+        String lockKey=key+":lock";
+        try {
+            if(redisLuaUtils.tryLock(lockKey,1000)){
+                //先判断货物库存是否充足
+                String lotteryCountStr=redisLuaUtils.get(key);
+                long lotteryCount=0l;
+                if(!StringUtils.isBlank(lotteryCountStr)){
+                    lotteryCount=Long.valueOf(lotteryCountStr);
+                }
+
+                if(lotteryCount<=0){
+                    return "没有奖品了";
+                }
+
+                System.out.println(redisLuaUtils.incrBy(key, -1l));
+
+            }
+        } finally {
+            redisLuaUtils.unLock(lockKey);
+        }
+
+        return "中奖了";
+    }
+
+    @RequestMapping("/setRedis")
+    public String setRedis(HttpServletRequest request,String key,String value) {
+        redisLuaUtils.set(key,value);
+
+        return "123123";
+    }
 
 }

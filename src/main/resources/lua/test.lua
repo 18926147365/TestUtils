@@ -1,2 +1,3 @@
 
-redis.call('set',KEYS[1],KEYS[2] .. '123')
+redis.call('set',KEYS[1],KEYS[2] .. '123');
+

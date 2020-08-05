@@ -27,6 +27,9 @@ public class RedisConfig {
     @Value("${redis.maxIdle}")
     private int maxIdle;
 
+    @Value("${redis.maxTotal}")
+    private int maxTotal;
+
     @Value("${redis.maxWaitMillis}")
     private int maxWaitMillis;
 
@@ -41,6 +44,7 @@ public class RedisConfig {
         System.out.println("JedisPool注入开始...");
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxIdle(maxIdle);
+        jedisPoolConfig.setMaxTotal(maxTotal);
         jedisPoolConfig.setMaxWaitMillis(maxWaitMillis);
         // 连接耗尽时是否阻塞, false报异常,true阻塞直到超时, 默认true
         jedisPoolConfig.setBlockWhenExhausted(blockWhenExhausted);
