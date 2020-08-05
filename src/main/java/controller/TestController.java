@@ -155,6 +155,7 @@ public class TestController {
         if(result==-1){
             System.out.println("没有了:"+redisLuaUtils.get(lockKey));
         }
+
         return "1";
     }
 
