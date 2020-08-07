@@ -2,6 +2,7 @@ package controller;
 
 import bean.User;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +20,8 @@ import utils.RedisLuaUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -131,7 +134,8 @@ public class TestController {
     public String test(HttpServletRequest request) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        List<User> list1 = userMapper.queryMoneys(1, 1);
+        List<User> list1 = userMapper.queryMoneys(0, 792260);
+        System.out.println(list1.size());
         stopWatch.stop();
         System.out.println("时间2花费：" + stopWatch.getTotalTimeSeconds() + "s");
         return "123";
@@ -139,13 +143,122 @@ public class TestController {
 
 
     @RequestMapping("/test1")
-    public String test1(HttpServletRequest request,String name) {
+    public String test1(HttpServletRequest request,String name) throws ExecutionException, InterruptedException {
+
+        int index=0;
+        StopWatch stopWatch=new StopWatch();
+        stopWatch.start();
+        ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        List<Future<List<User>>> futureList=new ArrayList<>();
+        int total=0;
+        a:do {
+
+            final int indexs=index;
+            FutureTask<List<User>> futureTask=new FutureTask<>(new Callable<List<User>>() {
+                @Override
+                public List<User> call() throws Exception {
+                    return (userMapper.queryMoneys(indexs*1000, 1000));
+                }
+            });
+            futureList.add(futureTask);
+            pool.submit(futureTask);
+            if(futureList!=null && futureList.size()>=10){
+                for (Future<List<User>> listFuture : futureList) {
+                    List<User> userList= listFuture.get();
+                    total+=userList.size();
+                    if(userList==null || userList.size()==0){
+                        pool.shutdown();
+                        System.out.println("线程池停止");
+                        break a;
+                    }
+                    pool.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            saveCSV(userList);
+
+                        }
+                    });
+                }
+                futureList=new ArrayList<>();
+            }
+            index++;
+            System.out.println(index);
+        } while (true);
+
+        stopWatch.stop();
+        System.out.println("耗时:"+stopWatch.getTotalTimeMillis()+"ms");
+        System.out.println("共查询出:"+total);
+        return "111";
+    }
 
 
 
 
+    private void saveCSV(List<User> list)  {
+        Object[] header = {"id", "name", "money","businessId"};
 
-        return "123123";
+
+        List<Object[]> dataList = new ArrayList<>();
+
+
+        for (User user : list) {
+            Object[] objects = new Object[4];
+            objects[0] = user.getId();
+            objects[1] = "123";
+            objects[2] = user.getMoney().doubleValue();
+            objects[3] = user.getBusinessId();
+            dataList.add(objects);
+        }
+
+        String path = "D:/test.csv";
+        try {
+            CsvUtils.writeCsv(header, dataList, path);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public  char getRandomChar() {
+        return (char) (0x4e00 + (int) (Math.random() * (0x9fa5 - 0x4e00 + 1)));
+    }
+
+
+
+
+    @RequestMapping("/batchSaveUser")
+    public String batchSaveUser(){
+        ExecutorService pool = new ThreadPoolExecutor(5, 5, 5000,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+
+        for (int k = 0; k < 95000; k++) {
+            final int d=k;
+            pool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("当前批次："+d);
+                    List<User> list=new ArrayList<>();
+                    for (int i = 0; i < 1000; i++) {
+                        User user=new User();
+                        user.setName(String.valueOf(getRandomChar())+String.valueOf(getRandomChar())+String.valueOf(getRandomChar()));
+                        long businessId=(long)(Math.random()*100)+1;
+                        user.setMoney(BigDecimal.valueOf(Math.random()*100000+200));
+                        user.setBusinessId(businessId);
+                        list.add(user);
+                    }
+                    userMapper.insertBatch(list);
+                }
+            });
+
+        }
+        return "123";
     }
 
     @RequestMapping("/seckill")
@@ -164,25 +277,12 @@ public class TestController {
     @RequestMapping("/lottery")
     public String lottery(HttpServletRequest request,String key,String name) throws InterruptedException {
 
-        String lockKey=key+":lock";
-        try {
-            if(redisLuaUtils.tryLock(lockKey,1000)){
-                //先判断货物库存是否充足
-                String lotteryCountStr=redisLuaUtils.get(key);
-                long lotteryCount=0l;
-                if(!StringUtils.isBlank(lotteryCountStr)){
-                    lotteryCount=Long.valueOf(lotteryCountStr);
-                }
 
-                if(lotteryCount<=0){
-                    return "没有奖品了";
-                }
-
-                System.out.println(redisLuaUtils.incrBy(key, -1l));
-
-            }
-        } finally {
-            redisLuaUtils.unLock(lockKey);
+        long obj=(redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.INCRBYGETMAX, Long.class, key, "10000", "1"));
+        if(obj==-1){
+            System.out.println("没有奖品了");
+        }else{
+            System.out.println(obj);
         }
 
         return "中奖了";

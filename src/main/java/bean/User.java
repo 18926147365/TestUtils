@@ -19,9 +19,20 @@ public class User {
     }
     private Integer id;
 
+    private Long businessId;
+
     private String name;
 
     private BigDecimal money;
+
+
+    public Long getBusinessId() {
+        return businessId;
+    }
+
+    public void setBusinessId(Long businessId) {
+        this.businessId = businessId;
+    }
 
     public BigDecimal getMoney() {
         return money;

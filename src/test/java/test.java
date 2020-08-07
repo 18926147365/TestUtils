@@ -53,8 +53,11 @@ public class test {
     static int total=1000;
     @Test
     public void test1() throws InterruptedException {
-        redisLuaUtils.set("lotterycount1","5000");
-//        System.out.println(redisLuaUtils.incrBy("lottery:count:1"));
+        String key="lotteryMax:1";
+        System.out.println(redisLuaUtils.get(key));
+        if (redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.INCRBYGETMAX, Long.class, key, "4", "1")==-1) {
+            System.out.println("没有库存了");
+        }
     }
     @Test
     public void clients() throws InterruptedException {

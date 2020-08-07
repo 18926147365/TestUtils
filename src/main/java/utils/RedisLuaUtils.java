@@ -1,6 +1,7 @@
 package utils;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -24,7 +25,8 @@ public class RedisLuaUtils {
     public enum ScriptLoadEnum {
         BATCHSET("/lua/batchSet.lua"),
         GETANDDEL("/lua/getAndDel.lua"),
-        SECKILL("/lua/incrbyAndGet.lua");
+        SECKILL("/lua/incrbyAndGet.lua"),
+        INCRBYGETMAX("/lua/incrbyGetMax.lua");
 
         private final String path;
 
@@ -72,13 +74,23 @@ public class RedisLuaUtils {
     }
 
 
-    public <T> T  evalsha(ScriptLoadEnum scriptLoadEnum, Class<T> classz, String... params) {
+    public <T extends Comparable> T  evalsha(ScriptLoadEnum scriptLoadEnum, Class<T> classz, String... params) {
         if(classz!=Long.class && classz!=String.class && classz!=Boolean.class){
             throw new RuntimeException("不支持的类型class:"+classz);
         }
         Object obj=evalsha(scriptLoadEnum,1,params);
         if(obj==null){
+            if(classz==Boolean.class){
+                return (T) Boolean.valueOf(false);
+            }
             return null;
+        }
+        if(classz==Boolean.class){
+            if(ObjectUtils.equals(obj,1l) || ObjectUtils.equals(obj,1)){
+                return (T) Boolean.valueOf(true);
+            }else {
+                return (T) Boolean.valueOf(false);
+            }
         }
         return (T)obj;
     }

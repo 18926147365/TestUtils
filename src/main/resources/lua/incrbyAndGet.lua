@@ -1,4 +1,4 @@
---[[  当计数器值少于0时则返回为-1 可用场景：秒杀等 ]]--
+--当计数器值少于0时则返回为-1
 local total = tonumber(redis.call('get',KEYS[1]))
 if total == nil or total <=0  then
     return -1
