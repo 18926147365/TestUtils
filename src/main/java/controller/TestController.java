@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 /**
  * @author 李浩铭
@@ -134,67 +135,39 @@ public class TestController {
     public String test(HttpServletRequest request) {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        List<User> list1 = userMapper.queryMoneys(0, 792260);
-        System.out.println(list1.size());
+
+        System.out.println(userMapper.countMoney()+"");
+
         stopWatch.stop();
         System.out.println("时间2花费：" + stopWatch.getTotalTimeSeconds() + "s");
         return "123";
+    }
+
+    private static String randStr="";
+
+    static {
+        randStr=new Date().getTime()+"";
     }
 
 
     @RequestMapping("/test1")
     public String test1(HttpServletRequest request,String name) throws ExecutionException, InterruptedException {
 
-        int index=0;
-        StopWatch stopWatch=new StopWatch();
-        stopWatch.start();
-        ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(),
-                Executors.defaultThreadFactory(),
-                new ThreadPoolExecutor.AbortPolicy());
 
-        List<Future<List<User>>> futureList=new ArrayList<>();
-        int total=0;
-        a:do {
 
-            final int indexs=index;
-            FutureTask<List<User>> futureTask=new FutureTask<>(new Callable<List<User>>() {
-                @Override
-                public List<User> call() throws Exception {
-                    return (userMapper.queryMoneys(indexs*1000, 1000));
-                }
-            });
-            futureList.add(futureTask);
-            pool.submit(futureTask);
-            if(futureList!=null && futureList.size()>=10){
-                for (Future<List<User>> listFuture : futureList) {
-                    List<User> userList= listFuture.get();
-                    total+=userList.size();
-                    if(userList==null || userList.size()==0){
-                        pool.shutdown();
-                        System.out.println("线程池停止");
-                        break a;
-                    }
-                    pool.submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            saveCSV(userList);
-
-                        }
-                    });
-                }
-                futureList=new ArrayList<>();
+        String key="test:cache:11118";
+//        System.out.println(redisLuaUtils.hget(key,"state"));
+        String val=redisLuaUtils.hgetCache(key, "默认值", new Supplier<String>() {
+            @Override
+            public String get() {
+                return testService.getName();
             }
-            index++;
-            System.out.println(index);
-        } while (true);
+        },2500,1000);
 
-        stopWatch.stop();
-        System.out.println("耗时:"+stopWatch.getTotalTimeMillis()+"ms");
-        System.out.println("共查询出:"+total);
-        return "111";
+        return val;
     }
+
+
 
 
 
@@ -229,6 +202,21 @@ public class TestController {
 
 
 
+    @RequestMapping("/peopleCount")
+    public String peopleCount(HttpServletRequest request) throws ExecutionException, InterruptedException {
+
+
+        String key="peopleCount:3";
+        String val=redisLuaUtils.hgetCache(key, "默认值", new Supplier<String>() {
+            @Override
+            public String get() {
+                System.out.println("查询db.....");
+                return userMapper.countMoney()+"";
+            }
+        },6000,12000);
+
+        return val;
+    }
 
     @RequestMapping("/batchSaveUser")
     public String batchSaveUser(){

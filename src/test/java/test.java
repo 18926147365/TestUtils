@@ -25,8 +25,10 @@ import utils.RedisLuaUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -53,11 +55,13 @@ public class test {
     static int total=1000;
     @Test
     public void test1() throws InterruptedException {
-        String key="lotteryMax:1";
-        System.out.println(redisLuaUtils.get(key));
-        if (redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.INCRBYGETMAX, Long.class, key, "4", "1")==-1) {
-            System.out.println("没有库存了");
+        SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+        for (int i = 0; i < 1000; i++) {
+            long date=(redisLuaUtils.getRedisTime());
+            Date d=new Date(date);
+            System.out.println(sdf.format(d));
         }
+
     }
     @Test
     public void clients() throws InterruptedException {

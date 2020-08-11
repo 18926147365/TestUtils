@@ -1,8 +1,10 @@
 package utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
@@ -10,8 +12,10 @@ import redis.clients.jedis.JedisPool;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * @author 李浩铭
@@ -19,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @descroption
  */
 @Component
+@Slf4j
 public class RedisLuaUtils {
 
 
@@ -26,7 +31,11 @@ public class RedisLuaUtils {
         BATCHSET("/lua/batchSet.lua"),
         GETANDDEL("/lua/getAndDel.lua"),
         SECKILL("/lua/incrbyAndGet.lua"),
-        INCRBYGETMAX("/lua/incrbyGetMax.lua");
+        INCRBYGETMAX("/lua/incrbyGetMax.lua"),
+        HSETCACHE("/lua/hsetCache.lua"),
+        HGETCACHE("/lua/hgetCache.lua"),
+        HSETFIELDNX("/lua/hsetFieldnx.lua"),
+        GETREDISTIME("/lua/getRedisTime.lua");
 
         private final String path;
 
@@ -74,26 +83,27 @@ public class RedisLuaUtils {
     }
 
 
-    public <T extends Comparable> T  evalsha(ScriptLoadEnum scriptLoadEnum, Class<T> classz, String... params) {
-        if(classz!=Long.class && classz!=String.class && classz!=Boolean.class){
-            throw new RuntimeException("不支持的类型class:"+classz);
+    public <T extends Comparable> T evalsha(ScriptLoadEnum scriptLoadEnum, Class<T> classz, String... params) {
+        if (classz != Long.class && classz != String.class && classz != Boolean.class) {
+            throw new RuntimeException("不支持的类型class:" + classz);
         }
-        Object obj=evalsha(scriptLoadEnum,1,params);
-        if(obj==null){
-            if(classz==Boolean.class){
+        Object obj = evalsha(scriptLoadEnum, 1, params);
+        if (obj == null) {
+            if (classz == Boolean.class) {
                 return (T) Boolean.valueOf(false);
             }
             return null;
         }
-        if(classz==Boolean.class){
-            if(ObjectUtils.equals(obj,1l) || ObjectUtils.equals(obj,1)){
+        if (classz == Boolean.class) {
+            if (ObjectUtils.equals(obj, 1l) || ObjectUtils.equals(obj, 1)) {
                 return (T) Boolean.valueOf(true);
-            }else {
+            } else {
                 return (T) Boolean.valueOf(false);
             }
         }
-        return (T)obj;
+        return (T) obj;
     }
+
     public Object evalsha(ScriptLoadEnum scriptLoadEnum, int keyCount, String... params) {
         Jedis jedis = null;
         try {
@@ -106,10 +116,10 @@ public class RedisLuaUtils {
         }
     }
 
-    public boolean set(String key,String value){
-        Jedis jedis=jedisPool.getResource();
+    public boolean set(String key, String value) {
+        Jedis jedis = jedisPool.getResource();
         try {
-            if("OK".equals(jedis.set(key,value))){
+            if ("OK".equals(jedis.set(key, value))) {
                 return true;
             }
             return false;
@@ -118,12 +128,152 @@ public class RedisLuaUtils {
         }
     }
 
-    public long incr(String key){
-        return incrBy(key,1l);
+    public Long hsetFieldnx(String key, String field, String ifVal, String val, Long queryTimeout) {
+        return evalsha(ScriptLoadEnum.HSETFIELDNX, Long.class, key, field, ifVal, val, queryTimeout + "");
     }
 
-    public String get(String key){
-        Jedis jedis=jedisPool.getResource();
+    public Long hset(String key, String field, String val) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            return jedis.hset(key, field, val);
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public String hget(String key, String field) {
+        Jedis jedis = jedisPool.getResource();
+
+        try {
+            return jedis.hget(key, field);
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public Long getRedisTime() {
+        return (Long) evalsha(ScriptLoadEnum.GETREDISTIME, 0);
+    }
+
+
+    public String hgetCache(String key, String defalutVal, Supplier<String> supplier) {
+        return hgetCache(key, defalutVal, supplier, 5000, 3000);
+    }
+
+    public String hgetCache(String key, String defalutVal, Supplier<String> supplier, Long expireTime) {
+        return hgetCache(key, defalutVal, supplier, expireTime, 3000);
+    }
+
+    /**
+     * 缓存获取
+     *
+     * @param key
+     * @param defalutVal   默认值(初始值)
+     * @param supplier     查询方法体
+     * @param expireTime   缓存过期有效时间(ms) 默认 5000ms
+     * @param queryTimeOut 查询超时时间(ms) 默认3000ms 该值建议为查询方法体平均查询时间的1.3倍
+     */
+    public String hgetCache(String key, String defalutVal, Supplier<String> supplier, long expireTime, long queryTimeOut) {
+
+
+        String evaResult = evalsha(ScriptLoadEnum.HGETCACHE, String.class, key, defalutVal, getRedisTime() + "");
+        if (StringUtils.isBlank(evaResult)) {
+            return defalutVal;
+        }
+        int indexOf = evaResult.indexOf(":");
+        String state = evaResult.substring(0, indexOf);
+        String val = evaResult.substring(indexOf + 1, evaResult.length());
+        if ("OK".equals(state.toUpperCase())) {
+            return val;
+        } else if ("EXPIRED".equals(state.toUpperCase())) {
+            if (hsetFieldnx(key, "state", "EXPIRED", "QUERYING", getRedisTime() + queryTimeOut) == 1) {
+
+                //为了保证永远只有一条线程去执行查询体方法，这里使用一个守护线程进行状态维护
+                Thread dThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (true) {
+                            hset(key, "queryTimeout", (getRedisTime() + queryTimeOut) + "");
+                            try {
+                                Thread.sleep(500);
+                            } catch (InterruptedException e) {
+                                break;
+                            }
+                        }
+                    }
+                });
+                dThread.setDaemon(true);
+                dThread.start();
+                Thread thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            StopWatch watch = new StopWatch();
+                            watch.start();
+                            log.info("hgetCache方法体执行查询开始thread{}---执行方法体:{}",
+                                    Thread.currentThread().getId(),
+                                    supplier.getClass().getName());
+
+                            String value = supplier.get();
+                            dThread.interrupt();//维护状态的守护线程停止
+                            evalsha(ScriptLoadEnum.HSETCACHE, String.class, key, (getRedisTime() + expireTime) + "", value);
+
+                            log.info("hgetCache方法体执行查询结束thread{}---执行方法体:{}  耗时:{}ms  返回值:{}",
+                                    Thread.currentThread().getId(),
+                                    supplier.getClass().getName(),
+                                    watch.getTime(), value);
+                        }catch (Exception e){
+                            dThread.interrupt();//维护状态的守护线程停止
+                            e.printStackTrace();
+                            log.error("hgetCache方法体执行异常thread{}：异常信息:{}",Thread.currentThread().getId(),e);
+                        }
+
+                    }
+                });
+                thread.setDaemon(true);
+                thread.start();
+
+
+            }
+            return val;
+        } else if ("QUERYING".equals(state.toUpperCase())) {
+            return val;
+        }
+
+        return defalutVal;
+    }
+
+
+    public boolean set(String key, String value, int timeout) {
+        Jedis jedis = jedisPool.getResource();
+
+
+        try {
+            if ("OK".equals(jedis.setex(key, timeout, value))) {
+                return true;
+            }
+            return false;
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public Long hsetnx(String key, String filed, String value) {
+        Jedis jedis = jedisPool.getResource();
+        try {
+            return jedis.hsetnx(key, filed, value);
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public long incr(String key) {
+        return incrBy(key, 1l);
+    }
+
+    public String get(String key) {
+        Jedis jedis = jedisPool.getResource();
         try {
             return jedis.get(key);
         } finally {
@@ -131,17 +281,18 @@ public class RedisLuaUtils {
         }
     }
 
-    public long incrBy(String key,Long value){
-        if(value==null){
-            value=1l;
+    public long incrBy(String key, Long value) {
+        if (value == null) {
+            value = 1l;
         }
-        Jedis jedis=jedisPool.getResource();
+        Jedis jedis = jedisPool.getResource();
         try {
-            return jedis.incrBy(key,value);
+            return jedis.incrBy(key, value);
         } finally {
             jedis.close();
         }
     }
+
     private static Map<String, Thread> threadMap = new ConcurrentHashMap<>();
 
 
@@ -155,12 +306,12 @@ public class RedisLuaUtils {
                 public void run() {
                     while (true) {
                         try {
-                            Thread.sleep(Double.valueOf(timeout*0.7).longValue());
+                            Thread.sleep(Double.valueOf(timeout * 0.7).longValue());
                         } catch (InterruptedException e) {
                             break;
                         }
                         //TODO 若这里网络请求延迟，还是会出现并发问题
-                        pexpire(key,timeout);
+                        pexpire(key, timeout);
                     }
                 }
 
