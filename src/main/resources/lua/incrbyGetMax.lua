@@ -1,4 +1,4 @@
---ARGV[1]:判断最大值 ARGV[2]:自增步长
+--ARGV[1]:判断最大值 ARGV[2]:自增步长 当当前值大于等于最大值时返回-1
 local count = tonumber(redis.call('get',KEYS[1]));
 local max = tonumber(ARGV[1]);
 local incrby = tonumber(ARGV[2]);
