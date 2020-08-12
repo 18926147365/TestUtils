@@ -55,12 +55,8 @@ public class test {
     static int total=1000;
     @Test
     public void test1() throws InterruptedException {
-        SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-        for (int i = 0; i < 1000; i++) {
-            long date=(redisLuaUtils.getRedisTime());
-            Date d=new Date(date);
-            System.out.println(sdf.format(d));
-        }
+        String key="123asdasd";
+        System.out.println(redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.TEST, 1, key));
 
     }
     @Test

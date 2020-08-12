@@ -29,6 +29,7 @@ public class RedisLuaUtils {
 
     public enum ScriptLoadEnum {
         BATCHSET("/lua/batchSet.lua"),
+        TEST("/lua/test.lua"),
         GETANDDEL("/lua/getAndDel.lua"),
         SECKILL("/lua/incrbyAndGet.lua"),
         INCRBYGETMAX("/lua/incrbyGetMax.lua"),
@@ -36,6 +37,7 @@ public class RedisLuaUtils {
         HGETCACHE("/lua/hgetCache.lua"),
         HSETFIELDNX("/lua/hsetFieldnx.lua"),
         GETREDISTIME("/lua/getRedisTime.lua");
+
 
         private final String path;
 
@@ -128,6 +130,18 @@ public class RedisLuaUtils {
         try {
             jedis = jedisPool.getResource();
             return jedis.evalsha(loadScript(scriptLoadEnum), keyCount, params);
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
+    public void scriptKill(){
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis.scriptKill();
         } finally {
             if (jedis != null) {
                 jedis.close();

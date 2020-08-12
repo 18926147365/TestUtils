@@ -6,6 +6,7 @@ import com.sun.management.GcInfo;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import utils.BloomFilterUtils;
 import utils.ThreadExecutorPool;
 
 import java.io.Console;
@@ -36,51 +37,13 @@ public class Test {
 
 
     public static void main(String[] args) throws Exception {
+        BloomFilter<Integer> filter=BloomFilterUtils.createOrGetIntger("str",10000,0.01);
+        filter.put(123);
+        filter.put(1233);
+        filter.put(12312);
+        System.out.println(filter.approximateElementCount());
+        System.out.println(filter.mightContain(1231));
 
-
-
-        ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(),
-                Executors.defaultThreadFactory(),
-                new ThreadPoolExecutor.AbortPolicy());
-        ((ThreadPoolExecutor) pool).allowCoreThreadTimeOut(true);
-
-
-        pool.submit(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                Thread thread= new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        while (true){
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            System.out.println(new Date().getTime());
-
-                        }
-                    }
-                });
-                thread.setDaemon(true);
-                thread.start();
-            }
-        }));
-        for (int i = 0; i < 10; i++) {
-            final int k=i;
-            pool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println(k);
-
-                }
-            });
-
-
-
-        }
 
     }
 
