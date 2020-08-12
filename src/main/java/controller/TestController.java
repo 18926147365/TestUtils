@@ -131,15 +131,23 @@ public class TestController {
         return JSONObject.toJSONString(list);
     }
 
+
+   static ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.AbortPolicy());
+    static {
+        ((ThreadPoolExecutor) pool).allowCoreThreadTimeOut(true);
+    }
+
+
     @RequestMapping("/test")
     public String test(HttpServletRequest request) {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
 
-        System.out.println(userMapper.countMoney()+"");
 
-        stopWatch.stop();
-        System.out.println("时间2花费：" + stopWatch.getTotalTimeSeconds() + "s");
+
+
         return "123";
     }
 

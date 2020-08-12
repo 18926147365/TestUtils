@@ -53,6 +53,25 @@ public class RedisLuaUtils {
     private JedisPool jedisPool;
 
 
+    public boolean setbit(String key,String value){
+        Jedis jedis = jedisPool.getResource();
+        try {
+           return jedis.setbit(key,1l,value);
+        } finally {
+            jedis.close();
+        }
+    }
+
+
+    public boolean getbit(String key,String value){
+        Jedis jedis = jedisPool.getResource();
+        try {
+            return jedis.getbit(key,1l);
+        } finally {
+            jedis.close();
+        }
+    }
+
     private static final Map<ScriptLoadEnum, String> SCRIPTLOADMAP = new ConcurrentHashMap<>();
 
     public String loadScript(ScriptLoadEnum scriptLoadEnum) {
@@ -132,9 +151,10 @@ public class RedisLuaUtils {
         return evalsha(ScriptLoadEnum.HSETFIELDNX, Long.class, key, field, ifVal, val, queryTimeout + "");
     }
 
+
+
     public Long hset(String key, String field, String val) {
         Jedis jedis = jedisPool.getResource();
-
         try {
             return jedis.hset(key, field, val);
         } finally {
@@ -376,6 +396,10 @@ public class RedisLuaUtils {
         } finally {
             if (jedis != null) {
                 jedis.close();
+            }
+            if (threadMap.containsKey(key)) {
+                threadMap.get(key).interrupt();
+                threadMap.remove(key);
             }
         }
 
