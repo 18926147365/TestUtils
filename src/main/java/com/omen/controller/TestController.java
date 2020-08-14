@@ -17,10 +17,27 @@ public class TestController {
 
     @RequestMapping("/testLog")
     public String testLog(){
-        log.error("测试");
+           String str;
+        try {
+            int i=10/0;
+        } catch (Exception e) {
+            //e.printStackTrace();
+            log.error("测试123:{}","123",e);
+        }
         return "123";
     }
 
+    @RequestMapping("/testLog1")
+    public String testLog1(){
+        String str;
+        try {
+            int i=10/0;
+        } catch (Exception e) {
+            //e.printStackTrace();
+            log.error("测试:{}","1234",e);
+        }
+        return "123";
+    }
 
 
 }
