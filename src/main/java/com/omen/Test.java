@@ -1,11 +1,16 @@
 package com.omen;
 
 
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.net.InetAddresses;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.UnknownHostException;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
 
 /**
  * @author 李浩铭
@@ -15,11 +20,5 @@ import java.util.TimerTask;
 
 public class Test {
 
-    public static void main(String[] args) throws Exception {
-
-       long l=179297;
-        System.out.println((double)l/1000);
-
-    }
 
 }
