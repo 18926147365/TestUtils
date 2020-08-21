@@ -1,16 +1,8 @@
 package com.omen;
 
 
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.net.InetAddresses;
-
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
+import com.omen.bean.LogModel;
+import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * @author 李浩铭
@@ -20,5 +12,11 @@ import java.util.List;
 
 public class Test {
 
+    public static void main(String[] args) {
+        LogModel logModel=new LogModel();
+        LogModel logModel1= ObjectUtils.clone(logModel);
+        System.out.println((logModel == logModel1));
+
+    }
 
 }

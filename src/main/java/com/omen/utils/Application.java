@@ -11,7 +11,7 @@ import org.springframework.context.annotation.ComponentScan;
  * @descroption
  */
 @SpringBootApplication
-@ComponentScan({"com.omen.controller", "com.omen.utils"})
+@ComponentScan({"com.omen.controller", "com.omen.utils","com.omen.proxy"})
 public class Application {
 
     static {
@@ -21,6 +21,7 @@ public class Application {
     public static void main(String[] args) {
         System.setProperty("java.awt.headless", "false");
         SpringApplication.run(Application.class, args);
+
     }
 
 }
