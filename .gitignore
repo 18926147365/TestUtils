@@ -1,2 +1,2 @@
-*.xml
 /target/
+/TestUtils.iml
