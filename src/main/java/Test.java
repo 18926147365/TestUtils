@@ -71,7 +71,7 @@ public class Test {
 
 
     static {
-        gcMBean = getGCMBean();
+//        gcMBean = getGCMBean();
     }
     private static GarbageCollectorMXBean getGCMBean() {
         try {
