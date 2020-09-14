@@ -1,7 +1,9 @@
 package controller;
 
 import bean.User;
+import bean.UserInfo;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.hash.BloomFilter;
 import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
@@ -9,12 +11,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StopWatch;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import service.TestService;
 import system.LoggerProxy;
+import utils.BloomFilterUtils;
 import utils.CsvUtils;
 import utils.RedisLuaUtils;
 
@@ -22,9 +27,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.rmi.server.UID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -290,5 +294,92 @@ public class TestController {
 
         return "123123";
     }
+
+
+
+    @RequestMapping("/test11")
+    public String test11(HttpServletRequest request){
+
+        return "123";
+    }
+
+    static ExecutorService mypool = new ThreadPoolExecutor(20, 20, 5000,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.AbortPolicy());
+
+
+    @GetMapping("/test22")
+    public String test22(HttpServletRequest request){
+
+        String key="test:@2222:21";
+        redisLuaUtils.del(key);
+        int size=1000*100;
+        CountDownLatch countDownLatch=new CountDownLatch(size);
+        for (int i = 0; i < size; i++) {
+            mypool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    redisLuaUtils.pfadd(key, UUID.randomUUID().toString());
+                    countDownLatch.countDown();
+                }
+            });
+        }
+        try {
+            countDownLatch.await();
+            long count=redisLuaUtils.pfcount(key);
+            System.out.println("待插入数据总数："+size);
+            System.out.println("hyper统计后："+count);
+            System.out.println("误算率:"+(((double)((Math.abs(size-count)))/(double)(count))*100)+"%");
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+
+        return "";
+
+
+
+
+    }
+
+    @RequestMapping("/test33")
+    public void test33(){
+        String key="phones:1";
+
+        BloomFilter<String> firstFiter=BloomFilterUtils.createOrGetString(key,10000000000l,0.03);
+        BloomFilter<String> secoeFiter=BloomFilterUtils.createOrGetString(key,100000000l,0.03);
+        //18926147365
+        //10000000000
+        //20000000000
+        org.apache.commons.lang3.time.StopWatch stopWatch=new org.apache.commons.lang3.time.StopWatch();
+        stopWatch.start();
+        System.out.println("开始");
+        long f1=0;
+        long f2=0;
+        for (long i = 0; i < 10000000000l; i++) {
+            if(!firstFiter.put((10000000000l+i)+"")){
+                f1++;
+                if(!secoeFiter.put((10000000000l+i)+"")){
+                    f2++;
+                }
+            }
+            if(i%1000000==0){
+                System.out.println((double) i/(double) (10000000000l)+"%");
+            }
+
+        }
+
+        System.out.println("f1:"+f1);
+        System.out.println("f2:"+f2);
+
+        stopWatch.stop();
+        System.out.println("共耗时:"+stopWatch.getTime());
+
+    }
+
 
 }

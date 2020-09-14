@@ -18,7 +18,7 @@ public class BloomFilterUtils {
 
 
 
-    public static <T> BloomFilter<T> createOrGet(String key, Funnel<? super T> funnel, int expectedInsertions, double fpp){
+    public static <T> BloomFilter<T> createOrGet(String key, Funnel<? super T> funnel, long expectedInsertions, double fpp){
         if(bloomFilterMap.containsKey(key)){
             return bloomFilterMap.get(key);
         }
@@ -32,13 +32,16 @@ public class BloomFilterUtils {
 
         }
     }
-
-    public static  BloomFilter<String> createOrGetString(String key, int expectedInsertions, double fpp){
+    public static  BloomFilter<String> createOrGetString(String key, long expectedInsertions, double fpp){
         return createOrGet(key,Funnels.stringFunnel(Charset.defaultCharset()),expectedInsertions,fpp);
     }
 
+    public static  BloomFilter<String> createOrGetString(String key, int expectedInsertions, double fpp){
+        return createOrGet(key,Funnels.stringFunnel(Charset.defaultCharset()),(long)expectedInsertions,fpp);
+    }
+
     public static  BloomFilter<Integer> createOrGetIntger(String key, int expectedInsertions, double fpp){
-        return createOrGet(key,Funnels.integerFunnel(),expectedInsertions,fpp);
+        return createOrGet(key,Funnels.integerFunnel(),(long)expectedInsertions,fpp);
     }
 
 }

@@ -1,12 +1,15 @@
 import bean.User;
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.base.Stopwatch;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.sun.management.GcInfo;
+import javafx.scene.paint.Stop;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import utils.BloomFilterUtils;
+import utils.HttpClientUtil;
 import utils.ThreadExecutorPool;
 
 import java.io.Console;
@@ -35,23 +38,96 @@ public class Test {
     private static final String GC_BEAN_NAME =
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
+    static int aa=5;
+    static int bb=5;
 
-    public static void main(String[] args) throws Exception {
-        BloomFilter<Integer> filter=BloomFilterUtils.createOrGetIntger("str",10000,0.01);
-        filter.put(123);
-        filter.put(1233);
-        filter.put(12312);
-        System.out.println(filter.approximateElementCount());
-        System.out.println(filter.mightContain(1231));
+    public static void main(String[] args) {
 
-
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                aa=6;
+            }
+        }).start();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        int cc=aa+bb;
+        System.out.println(cc);
     }
 
 
+    public static void httpMarket(){
+
+        String url="http://10.191.8.120:18803/market/json/mkt_activity_order/startOrderActivity?token=a::159894032CA94F04B9A05951CBBCA03B&sign=100";
+
+        ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+        ((ThreadPoolExecutor) pool).allowCoreThreadTimeOut(true);
+        CountDownLatch countDownLatch=new CountDownLatch(1);
+
+        StopWatch stopWatch=new StopWatch();
+        stopWatch.start();
+        for (int i = 0; i < 10; i++) {
+            final int k=i;
+            pool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    Map<String,String> map=new HashMap<>();
+                    String jsonStr="{\"orderType\":\"950013\",\"usedCouIsDist\":\"true\",\"promoteIsDist\":\"false\",\"requestOrderModels\":\"[{\\\"combinationPayMode\\\":\\\"071His_6202\\\"},{\\\"combinationPayMode\\\":\\\"071His_64\\\"}]\",\"telephone\":\"15813811408\",\"distributionChannel\":\"1981\",\"orderProductList\":\"[{\\\"proCode\\\":\\\"35339\\\",\\\"categoryCode\\\":\\\"830906\\\",\\\"salePrice\\\":234.6700,\\\"num\\\":1.0000,\\\"amount\\\":234.67}]\",\"orderNo\":\"2020090571921314417_44030886106002009080028\",\"storeConsumeAmount\":\"234.6700\",\"tradeTime\":\"2020-09-08 07:38:54.000\",\"storeOuCode\":\"100043024010013\",\"userId\":\"12385922\",\"userLevel\":\"1001\",\"acceptTime\":\"2020-09-08 07:39:05.450\",\"birthday\":\"\",\"payTime\":\"2020/9/5 8:48:31\",\"tradeNode\":\"4403088\",\"networkType\":\"001001001\"}";
+                    map= (Map<String, String>) JSONObject.parse(jsonStr);
+                    map.put("occurOuCode","2001150");
+                    String orderNo="2020091071921314416_44030886106002031"+k;
+                    map.put("orderNo",orderNo);
+                    System.out.println(HttpClientUtil.doPost(url, map,null));
+                    countDownLatch.countDown();
+                }
+            });
+
+        }
+        try {
+            countDownLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        stopWatch.stop();
+        System.out.println(stopWatch.getTime());
+    }
+
+
+    //布隆过滤器例子2
+    public static void testBloom2(){
+
+        String key="123123";
+        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString(key,1000000,0.03);
+        //提前将10W白名单插入过滤器中
+        for (int i = 0; i < 100000; i++) {
+            bloomFilter.put(i+"");
+        }
+
+
+        //100W访问，判断是否有白名单用户
+        int f=0;
+        for (int i = 0; i < 1000000; i++) {
+            int rand=(int)(Math.random()*10000000)+500;
+            if(bloomFilter.mightContain(rand+"")){
+                if(rand>100000){
+                    f++;
+                    System.err.println(rand);
+                }
+            }
+        }
+        System.out.println(f);
+    }
 
     public static  void testBloom(){
         BloomFilter<CharSequence> filter = BloomFilter.create(Funnels.stringFunnel(Charset.defaultCharset()), 10000000, 0.03F);
-        int size=100000;
+        int size=1000000;
         for (int i = 0; i < size; i++) {
             filter.put(i+"");
         }

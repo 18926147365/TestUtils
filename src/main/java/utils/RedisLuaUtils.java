@@ -68,12 +68,20 @@ public class RedisLuaUtils {
     public boolean getbit(String key,String value){
         Jedis jedis = jedisPool.getResource();
         try {
+
             return jedis.getbit(key,1l);
         } finally {
             jedis.close();
         }
     }
-
+    public long del(String key){
+        Jedis jedis = jedisPool.getResource();
+        try {
+            return jedis.del(key);
+        } finally {
+            jedis.close();
+        }
+    }
     private static final Map<ScriptLoadEnum, String> SCRIPTLOADMAP = new ConcurrentHashMap<>();
 
     public String loadScript(ScriptLoadEnum scriptLoadEnum) {
@@ -181,6 +189,24 @@ public class RedisLuaUtils {
 
         try {
             return jedis.hget(key, field);
+        } finally {
+            jedis.close();
+        }
+    }
+
+
+    public Long pfadd(String key, String... elements) {
+        Jedis jedis = jedisPool.getResource();
+        try {
+            return jedis.pfadd(key,elements);
+        } finally {
+            jedis.close();
+        }
+    }
+    public Long pfcount(String key) {
+        Jedis jedis = jedisPool.getResource();
+        try {
+            return jedis.pfcount(key);
         } finally {
             jedis.close();
         }

@@ -26,10 +26,11 @@ public class CsvUtils {
         CSVFormat formator = CSVFormat.DEFAULT.withRecordSeparator("\n");
         //创建FileWriter对象
         FileWriter fileWriter = new FileWriter(new File(filePath), true);
+
         //创建CSVPrinter对象
         CSVPrinter printer = new CSVPrinter(fileWriter, formator);
         //写入列头数据
-        printer.printRecord(headers);
+//        printer.printRecord(headers);
         if (null != data) {
             //循环写入数据
             for (Object[] lineData : data) {
@@ -44,11 +45,14 @@ public class CsvUtils {
 
 
     public static void main(String[] args) throws IOException {
-        Object[] headers={"id","name"};
+//        Object[] headers={"id","name"};
+
         List<Object[]> data=new ArrayList<>();
-        Object[] data1={1,2};
-        data.add(data1);//
-        writeCsv(headers,data,"D://1.csv");
+        for (int i = 0; i < 1000; i++) {
+            Object[] data1={1,2,3,4,5,6,7,8,9,10,11};
+            data.add(data1);//
+        }
+        writeCsv(new Object[0],data,"D://1.csv");
     }
 
 
