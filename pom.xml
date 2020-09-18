@@ -72,7 +72,7 @@
             <version>1.6</version>
         </dependency>
 
-        <!-- javamail -->
+<!--         javamail -->
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>

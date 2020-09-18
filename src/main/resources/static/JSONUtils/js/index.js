@@ -1,5 +1,7 @@
 
 $(function(){
+    var keyworkNum=0;
+    var keyworkIndex=0;
     function isJSON(str) {
         if (typeof str == 'string') {
             try {
@@ -66,17 +68,72 @@ $(function(){
 })
 
 function searchvalue(){
+    keyworkNum=0;
+    keyworkIndex=0;
+    //精准查询、模糊查询
     var val=($("#searchvalue").val());
     var json=$("#json-src").val();
-    console.log(json);
+    var jsonKeyList=$("#json-target").find(".json_key");
+    $("#keywordSelect").empty();
+    $(".keywordSelect").hide();
+    $("#json-target").find(".json_key").removeClass("star");
+
+    var bischecked=$('#ismohu').is(':checked');
+    $("#keyworkNum").text(0+"/"+0);
+    if(val=="" || val.length<=1){
+        return ;
+    }
+    var candidateWorks=new Array();
+    var num=0;
+    jsonKeyList.each(function(i,info){
+        var lval=val.toLowerCase();
+        var text=$(info).text();
+        if(bischecked){
+            if(text.toLowerCase().indexOf(lval)!=-1){
+                var texts=text.replace("\"","").replace("\"","");
+                if(candidateWorks.indexOf(texts)==-1){
+                    candidateWorks.push(texts);
+                }
+                num++;
+                $(info).addClass("star")
+            }
+        }else{
+            var texts=text.replace("\"","").replace("\"","");
+            if(texts.toLowerCase()==(lval)){
+                if(candidateWorks.indexOf(texts)==-1){
+                    candidateWorks.push(texts);
+                }
+                num++;
+                $(info).addClass("star")
+            }
+        }
+
+
+    })
+
+
+    if(candidateWorks.length==0 ){
+        return ;
+    }
+    var kselectHtml="";
+    for (let i = 0; i < candidateWorks.length; i++) {
+        kselectHtml+=('<option>'+candidateWorks[i]+'</option>');
+    }
+    $("#keywordSelect").attr("size",candidateWorks.length);
+    $("#keywordSelect").append(kselectHtml);
+    keyworkNum=num;
+    keyworkIndex=1;
+    $("#keyworkNum").text(keyworkIndex+"/"+num);
+    $(".keywordSelect").css("display","inline-block");
+    $(".star").eq(0)[0].scrollIntoView();
+    $("#right-box").scrollTop($("#right-box").scrollTop()-44);
+
 }
 
-function arraynumchange(){
-    var num=$(".arraynum").val();
-    var width=(num.length);
-    $(".arraynum").css("width",(width)*10+"px");
-}
 
+$('#ismohu').click(function (){
+    searchvalue();
+})
 
 function validData(){
     $("#searchvalue").val("");
@@ -91,9 +148,60 @@ function validData(){
 
    }
 
+    $("#searchvalue").keydown(function(event){
+        if(event.keyCode==40){//下键
+            $("#keywordSelect option").eq(0).attr("selected","true");
+            $("#keywordSelect").focus();
+        }
+
+    });
+
+    $("#keywordSelect").keydown(function(event){
+        var code=event.keyCode;
+        if(code==8){//删除
+            var val=$("#searchvalue").val();
+            val=val.substring(0,val.length);
+            $("#searchvalue").val(val);
+            $("#searchvalue").focus();
+        }else if(code==13){//回车
+            $(".keywordSelect").hide();
+            $("#searchvalue").val($("#keywordSelect").val());
+            searchvalue();
+            $("#searchvalue").focus();
+        }
+
+    });
+    $("#keywordSelect").blur(function (){
+        $(".keywordSelect").hide();
+    })
 
 
+    $("#keywordSelect").on("click","option",function(){
+        $(".keywordSelect").hide();
+        $("#searchvalue").val($("#keywordSelect").val());
+        searchvalue();
+        $("#searchvalue").focus();
+    })
 
+    $("#lastkeywork").click(function (){
+        if(keyworkIndex<=1){
+            return ;
+        }
+        keyworkIndex--;
+        myscrollIntoView();
+    })
 
+    $("#nextkeywork").click(function (){
+        if(keyworkIndex>=keyworkNum){
+            return ;
+        }
+        keyworkIndex++;
+        myscrollIntoView();
+    })
 
+    function myscrollIntoView(){
+        $(".star").eq(0)[keyworkIndex].scrollIntoView();
+        $("#right-box").scrollTop($("#right-box").scrollTop()-44);
+        $("#keyworkNum").text(keyworkIndex+"/"+keyworkNum);
+    }
 }

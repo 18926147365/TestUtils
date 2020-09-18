@@ -6,7 +6,17 @@
     <link href="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/bootstrap.min.css" rel="stylesheet">
     <link href="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/font-awesome.min.css" rel="stylesheet">
     <link href="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/base.css" rel="stylesheet">
-    <style></style>
+    <style>
+        .star{
+            background-color: #ccc;
+        }
+        .keywordSelect{
+            position: absolute;
+            z-index: 10000000;
+            top: 30px;
+            margin-left: -249px;
+        }
+    </style>
 
 <style type="text/css">.json_key{ color: #92278f;font-weight:bold;}.json_null{color: #f1592a;font-weight:bold;}.json_string{ color: #3ab54a;font-weight:bold;}.json_number{ color: #25aae2;font-weight:bold;}.json_boolean{ color: #f98280;font-weight:bold;}.json_link{ color: #61D2D6;font-weight:bold;}.json_array_brackets{}</style><link rel="preload" href="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/f(3).txt" as="script"><script type="text/javascript" async="" src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/analytics.js.下载"></script><script src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/f.txt"></script><script src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/osd.js.下载"></script><script src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/f.txt"></script><script src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/f(1).txt"></script><script src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/f(2).txt" id="google_shimpl"></script><script type="text/javascript" src="/JSONUtils/JSON在线解析及格式化验证 - JSON.cn_files/f(3).txt"></script><style type="text/css">@charset "utf-8";
 			:focus {outline:none;}
@@ -150,23 +160,26 @@
                 </ul>
             </div>
             <a class="custom-btn" href="https://www.json.cn/json/jsoncompare.html" data-placement="bottom">代码对比</a>
-            <span style="">
-                <span>base<span style="display: none" id="arraynumhide">[<input class="arraynum" min="0" type="number" oninput="arraynumchange()">]</span>.</span>
-                <input type="text" id="searchvalue" oninput="searchvalue()" class="searchvalue"/>
+            <div style="display: inline-block;position: absolute;width: 450px;margin-top: 10px; margin-left: 10px;">Key搜索： <input type="text"  id="searchvalue" oninput="searchvalue()" class="searchvalue"/><input id="ismohu" checked="checked" style="margin-left: 4px" type="checkbox"/> 模糊查询
+                <span id="keyworkNum">1/1</span>
+                <button id="lastkeywork">↑</button>
+                <button id="nextkeywork">↓</button>
+                <span class="keywordSelect" style="display: none">
+                   <select size="2" id="keywordSelect">
 
-            </span>
+                   </select>
+                </span>
+            </div>
 
 
         </div>
-        <nav class="col-md-4" style="padding:10px 0; " align="right">
+        <nav class="col-md-4" style="padding:10px 0; display: none" align="right">
             <div class="navi">
                 <!--<a href="http://lab.json.cn/" target="_blank"  data-placement="bottom">
                   <span class="red">JSON实验室</span>
               </a>-->
-                <a href="https://www.json.cn/wiki.html" data-placement="bottom">什么是JSON</a>
                 <a href="https://www.json.cn/code.html" data-placement="bottom">JSON解析代码</a>
                 <a href="https://www.json.cn/component.html" data-placement="bottom">JSON组件</a>
-
             </div>
         </nav>
         <br style="clear:both;">
@@ -552,10 +565,9 @@
         background-color: #0fd59d;
     }
     .searchvalue{
-        width: 180px;
-        border: none;
+        width: 150px;
         margin-left: -5px;
-
+        display: inline-block;
     }
 
     /*添加css样式*/
