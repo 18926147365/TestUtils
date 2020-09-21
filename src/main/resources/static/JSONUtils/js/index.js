@@ -1,7 +1,7 @@
-
+var keyworkNum=0;
+var keyworkIndex=0;
 $(function(){
-    var keyworkNum=0;
-    var keyworkIndex=0;
+
     function isJSON(str) {
         if (typeof str == 'string') {
             try {
@@ -148,60 +148,61 @@ function validData(){
 
    }
 
-    $("#searchvalue").keydown(function(event){
-        if(event.keyCode==40){//下键
-            $("#keywordSelect option").eq(0).attr("selected","true");
-            $("#keywordSelect").focus();
-        }
 
-    });
+}
+$("#searchvalue").keydown(function(event){
+    if(event.keyCode==40){//下键
+        $("#keywordSelect option").eq(0).attr("selected","true");
+        $("#keywordSelect").focus();
+    }
 
-    $("#keywordSelect").keydown(function(event){
-        var code=event.keyCode;
-        if(code==8){//删除
-            var val=$("#searchvalue").val();
-            val=val.substring(0,val.length);
-            $("#searchvalue").val(val);
-            $("#searchvalue").focus();
-        }else if(code==13){//回车
-            $(".keywordSelect").hide();
-            $("#searchvalue").val($("#keywordSelect").val());
-            searchvalue();
-            $("#searchvalue").focus();
-        }
+});
 
-    });
-    $("#keywordSelect").blur(function (){
-        $(".keywordSelect").hide();
-    })
-
-
-    $("#keywordSelect").on("click","option",function(){
+$("#keywordSelect").keydown(function(event){
+    var code=event.keyCode;
+    if(code==8){//删除
+        var val=$("#searchvalue").val();
+        val=val.substring(0,val.length);
+        $("#searchvalue").val(val);
+        $("#searchvalue").focus();
+    }else if(code==13){//回车
         $(".keywordSelect").hide();
         $("#searchvalue").val($("#keywordSelect").val());
         searchvalue();
-        $("#searchvalue").focus();
-    })
-
-    $("#lastkeywork").click(function (){
-        if(keyworkIndex<=1){
-            return ;
-        }
-        keyworkIndex--;
-        myscrollIntoView();
-    })
-
-    $("#nextkeywork").click(function (){
-        if(keyworkIndex>=keyworkNum){
-            return ;
-        }
-        keyworkIndex++;
-        myscrollIntoView();
-    })
-
-    function myscrollIntoView(){
-        $(".star").eq(0)[keyworkIndex].scrollIntoView();
-        $("#right-box").scrollTop($("#right-box").scrollTop()-44);
-        $("#keyworkNum").text(keyworkIndex+"/"+keyworkNum);
+        // $("#searchvalue").focus();
     }
+
+});
+$("#keywordSelect").blur(function (){
+    $(".keywordSelect").hide();
+})
+
+
+$("#keywordSelect").on("click","option",function(){
+    $(".keywordSelect").hide();
+    $("#searchvalue").val($("#keywordSelect").val());
+    searchvalue();
+    $("#searchvalue").focus();
+})
+
+$("#lastkeywork").click(function (){
+    if(keyworkIndex<=0){
+        return ;
+    }
+    keyworkIndex--;
+    myscrollIntoView();
+})
+
+$("#nextkeywork").click(function (){
+    if(keyworkIndex>keyworkNum-1){
+        return ;
+    }
+    keyworkIndex++;
+    myscrollIntoView();
+})
+
+function myscrollIntoView(){
+    $(".star").eq(keyworkIndex-1)[0].scrollIntoView();
+    $("#right-box").scrollTop($("#right-box").scrollTop()-44);
+    $("#keyworkNum").text((keyworkIndex)+"/"+keyworkNum);
 }
