@@ -313,32 +313,7 @@ public class TestController {
     @GetMapping("/test22")
     public String test22(HttpServletRequest request){
 
-        String key="test:@2222:21";
-        redisLuaUtils.del(key);
-        int size=1000*100;
-        CountDownLatch countDownLatch=new CountDownLatch(size);
-        for (int i = 0; i < size; i++) {
-            mypool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    redisLuaUtils.pfadd(key, UUID.randomUUID().toString());
-                    countDownLatch.countDown();
-                }
-            });
-        }
-        try {
-            countDownLatch.await();
-            long count=redisLuaUtils.pfcount(key);
-            System.out.println("待插入数据总数："+size);
-            System.out.println("hyper统计后："+count);
-            System.out.println("误算率:"+(((double)((Math.abs(size-count)))/(double)(count))*100)+"%");
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-
-
+        System.out.println(userMapper.queryMoneys(0, 1).size());
         return "";
 
 

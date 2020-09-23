@@ -5,9 +5,13 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.sun.management.GcInfo;
 import javafx.scene.paint.Stop;
+import javassist.*;
+import javassist.bytecode.MethodInfo;
 import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import utils.Application;
 import utils.BloomFilterUtils;
 import utils.HttpClientUtil;
 import utils.ThreadExecutorPool;
@@ -41,22 +45,30 @@ public class Test {
     static int aa=5;
     static int bb=5;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        ClassPool pool = ClassPool.getDefault();
+        CtClass cc = null;
+        cc=pool.makeClass("Hello");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                aa=6;
-            }
-        }).start();
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        int cc=aa+bb;
-        System.out.println(cc);
+        CtConstructor constructor = new CtConstructor(new CtClass[] {}, cc);
+        constructor.setBody("{System.out.println(55111);}");
+        cc.addConstructor(constructor);
+        cc.writeFile("target/classes/");
+//        Class.forName("Hello").getConstructors()[0].newInstance();
+
+
     }
+
+
+
+
+
+
+
+
+
+
+
 
 
     public static void httpMarket(){

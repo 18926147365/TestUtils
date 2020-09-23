@@ -7,8 +7,14 @@ import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisScriptingCommands;
 import javafx.scene.paint.Stop;
+import javassist.ClassPool;
+import javassist.CtClass;
+import javassist.CtMethod;
+import javassist.NotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.utils.HttpClientUtils;
+import org.checkerframework.checker.units.qual.C;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -43,9 +49,8 @@ import java.util.concurrent.*;
 public class test {
 
 
-
     @Autowired
-    private RedisLuaUtils redisLuaUtils;
+    private static RedisLuaUtils redisLuaUtils;
 
 
     @Autowired
@@ -54,17 +59,18 @@ public class test {
 
     static int total=1000;
     @Test
-    public void test1() throws InterruptedException {
-        String key="123asdasd";
-        System.out.println(redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.TEST, 1, key));
+    public void Run() throws Exception {
+        while (true){
+            Class.forName("Hello");
+        }
 
     }
+
     @Test
     public void clients() throws InterruptedException {
         String key="lotterycount1";
         int prizeCount=100;//奖品总数
         redisLuaUtils.set(key,prizeCount+"");
-
     }
 
     @Test
