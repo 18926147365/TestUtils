@@ -46,5 +46,12 @@ public class BinTree {
     }
 
 
-
+    @Override
+    public String toString() {
+        return "BinTree{" +
+                "leftTree=" + leftTree +
+                ", rightTree=" + rightTree +
+                ", data=" + data +
+                '}';
+    }
 }
