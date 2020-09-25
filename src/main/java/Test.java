@@ -1,3 +1,4 @@
+import bean.BinTree;
 import bean.User;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Stopwatch;
@@ -11,10 +12,8 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import utils.Application;
-import utils.BloomFilterUtils;
-import utils.HttpClientUtil;
-import utils.ThreadExecutorPool;
+import org.checkerframework.checker.units.qual.C;
+import utils.*;
 
 import java.io.Console;
 import java.lang.management.ManagementFactory;
@@ -42,20 +41,14 @@ public class Test {
     private static final String GC_BEAN_NAME =
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
-    static int aa=5;
-    static int bb=5;
-
     public static void main(String[] args) throws Exception {
-        ClassPool pool = ClassPool.getDefault();
-        CtClass cc = null;
-        cc=pool.makeClass("Hello");
-
-        CtConstructor constructor = new CtConstructor(new CtClass[] {}, cc);
-        constructor.setBody("{System.out.println(55111);}");
-        cc.addConstructor(constructor);
-        cc.writeFile("target/classes/");
-//        Class.forName("Hello").getConstructors()[0].newInstance();
-
+        BinTree<User> root = new BinTree<User>(null, null, 13l,new User("你好"));
+        root.addNode(12l,new User("测试"));
+        root.addNode(22l,new User("测试222"));
+        root.addNode(33l,new User("测试222"));
+        root.addNode(24l,new User("测试22322"));
+        root.inEach();
+        System.out.println("---");
 
     }
 
