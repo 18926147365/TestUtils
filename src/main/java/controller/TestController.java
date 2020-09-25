@@ -10,6 +10,7 @@ import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,6 +56,8 @@ public class TestController {
     @Autowired
     private RedisLuaUtils redisLuaUtils;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     @RequestMapping("/report")
     public String report(HttpServletRequest request) throws Exception {
 
@@ -323,38 +326,30 @@ public class TestController {
 
     @RequestMapping("/test33")
     public void test33(){
-        String key="phones:1";
-
-        BloomFilter<String> firstFiter=BloomFilterUtils.createOrGetString(key,10000000000l,0.03);
-        BloomFilter<String> secoeFiter=BloomFilterUtils.createOrGetString(key,100000000l,0.03);
-        //18926147365
-        //10000000000
-        //20000000000
-        org.apache.commons.lang3.time.StopWatch stopWatch=new org.apache.commons.lang3.time.StopWatch();
-        stopWatch.start();
-        System.out.println("开始");
-        long f1=0;
-        long f2=0;
-        for (long i = 0; i < 10000000000l; i++) {
-            if(!firstFiter.put((10000000000l+i)+"")){
-                f1++;
-                if(!secoeFiter.put((10000000000l+i)+"")){
-                    f2++;
-                }
-            }
-            if(i%1000000==0){
-                System.out.println((double) i/(double) (10000000000l)+"%");
-            }
-
-        }
-
-        System.out.println("f1:"+f1);
-        System.out.println("f2:"+f2);
-
-        stopWatch.stop();
-        System.out.println("共耗时:"+stopWatch.getTime());
-
+//        String sql="insert into test2 (hash_code,`key`) value";
+//
+//        List<String> list=new ArrayList<>();
+//        int k=0;
+//        for (int i = 0; i < 20000000; i++) {
+//            String  key=String.format("10001-1-%s",UUID.randomUUID().toString());
+//            int hashCode=key.hashCode();
+//            list.add("("+hashCode+",'"+key+"')");
+//            if(i%2000==0){
+//                k++;
+//                System.out.println((double)k/(double)10000);
+//                jdbcTemplate.update(sql+String.join(",", list));
+//                list=new ArrayList<>();
+//            }
+//
+//        }
+        System.out.println("完成");
     }
-
+    @RequestMapping("/test34")
+    public void test34(){
+        String key="10001-1-d3648d14-99fc-4d55-8d9b-b7d48f6378b8";
+        String sql="select * from test2 where hash_code=? and `key`=?";
+        System.out.println(key.hashCode());
+        System.out.println(jdbcTemplate.queryForList(sql, key.hashCode(), key));
+    }
 
 }
