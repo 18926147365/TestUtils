@@ -8,9 +8,9 @@ package bean;
 public class BinTree<T> {
 
 
-    private BinTree leftTree;
+    private BinTree<T> leftTree;
 
-    private BinTree rightTree;
+    private BinTree<T> rightTree;
 
     private Long data;
 
@@ -24,19 +24,19 @@ public class BinTree<T> {
         this.object = object;
     }
 
-    public BinTree getLeftTree() {
+    public BinTree<T> getLeftTree() {
         return leftTree;
     }
 
-    public void setLeftTree(BinTree leftTree) {
+    public void setLeftTree(BinTree<T> leftTree) {
         this.leftTree = leftTree;
     }
 
-    public BinTree getRightTree() {
+    public BinTree<T> getRightTree() {
         return rightTree;
     }
 
-    public void setRightTree(BinTree rightTree) {
+    public void setRightTree(BinTree<T> rightTree) {
         this.rightTree = rightTree;
     }
 
@@ -48,6 +48,7 @@ public class BinTree<T> {
         this.data = data;
     }
 
+    public BinTree(){}
     public BinTree(BinTree<T> leftTree, BinTree<T> rightTree, Long data) {
         this.leftTree = leftTree;
         this.rightTree = rightTree;
@@ -111,52 +112,93 @@ public class BinTree<T> {
     }
 
 
-    private  boolean delNote(BinTree rootTree, Long data) {
-        BinTree leftTree = rootTree.getLeftTree();//10
-        BinTree rightTree = rootTree.getRightTree();//20
-        Long rootData = rootTree.getData();
-        boolean isAdd = false;
-        if (rootData == data) {
-            if(leftTree==null || rightTree==null){
-                rootTree=null;
-            }
-            if(leftTree!=null && rightTree!=null){
-                //计算左右节点深度
-                int leftDep=leftTree.treeDepth();
-                int rightDep=rightTree.treeDepth();
-                if(leftDep<rightDep){
 
-                }else{
+    public boolean delNote(Long data){
+        BinTree<T> parentTree= getBinParentTree(data);
+        if(parentTree==null){
+            return false;
+        }
+        BinTree<T> leftTree=parentTree.getLeftTree();
+        BinTree<T> rightTree=parentTree.getRightTree();
+        BinTree<T> thisTree=null;
 
-                }
-            }
-            if(leftTree!=null){
-                rootTree=leftTree;
-            }else{
-                rootTree=rightTree;
-            }
-            return true;
+        if(data.longValue()==parentTree.getData().longValue()){
+            delNote(parentTree,parentTree,"root");
         }
-        if (rootData > data) {
-            if (leftTree == null) {
-                return false;
-            }
-            isAdd = delNote(leftTree, data);
+        if(leftTree!=null && leftTree.getData().longValue()==data.longValue()){
+            thisTree=leftTree;
+            delNote(parentTree,thisTree,"left");
+        }else if (rightTree!=null && rightTree.getData().longValue()==data.longValue()){
+            thisTree=rightTree;
+            delNote(parentTree,thisTree,"right");
         }
-        if (rootData < data) {
-            if (rightTree == null) {
-                return false;
-            }
-            isAdd = delNote(rightTree, data);
-        }
-        return isAdd;
+
+        return true;
+
     }
+    private void delNote(BinTree<T> parentTrree,BinTree<T> binTree,String action){
+        BinTree<T> r=binTree.getRightTree();
+        BinTree<T> coverTree=null;
+        if(r==null){
+            //删除本身
+            if(binTree.getLeftTree()!=null){
+                coverTree=binTree.getLeftTree();
+            }
+        }else{
+            BinTree<T> rParent=null;
+            while (r!=null){
+                if(r.getLeftTree()==null){
+                    if (rParent == null) {
+                        r.setLeftTree(binTree.getLeftTree());
+                        coverTree=r;
+                        break;
+                    }
+                    if(r.getRightTree()!=null){
+                        rParent.setLeftTree(r.getRightTree());
+                    }else{
+                        rParent.setLeftTree(null);
+                    }
+                    binTree.setData(r.getData());
+                    binTree.setObject(r.getObject());
+                    return;
+                }
+                rParent=r;
+                r=r.getLeftTree();
+            }
+        }
+        if("left".equals(action)){
+            parentTrree.setLeftTree(coverTree);
+        }else if("right".equals(action)){
+            parentTrree.setRightTree(coverTree);
+        }else if("root".equals(action)){
+            if(coverTree==null){
+
+
+                return;
+            }
+            parentTrree.setData(coverTree.getData());
+            parentTrree.setObject(coverTree.getObject());
+            if(parentTrree.getRightTree()==null){
+                parentTrree.setLeftTree(coverTree.getLeftTree());
+                parentTrree.setRightTree(coverTree.getRightTree());
+            }else{
+                parentTrree.setRightTree(coverTree.getRightTree());
+            }
+        }
+    }
+
+
 
 
     /**
      * 不存在则新增，存在则覆盖
      * */
     public boolean setNode(Long data, T object) {
+        if(getData()==null){
+            setData(data);
+            setObject(object);
+            return true;
+        }
         return setNode(this,data,object);
     }
 
@@ -213,10 +255,19 @@ public class BinTree<T> {
 
 
     public boolean addNode(Long data) {
+        if(getData()==null){
+            setData(data);
+            return true;
+        }
         return addNode(this, data, null);
     }
 
     public boolean addNode(Long data, T object) {
+        if(getData()==null){
+            setObject(object);
+            setData(data);
+            return true;
+        }
         return addNode(this, data, object);
     }
 
@@ -224,7 +275,6 @@ public class BinTree<T> {
     public BinTree<T> getBinTree(Long data) {
         return getBinTree(this, data);
     }
-
 
     private BinTree<T> getBinTree(BinTree<T> rootTree, Long data) {
         BinTree<T> leftTree = rootTree.getLeftTree();//10
@@ -248,6 +298,37 @@ public class BinTree<T> {
         return null;
     }
 
+
+    public BinTree<T> getBinParentTree(Long data) {
+        return getBinParentTree(this, data);
+    }
+
+    private BinTree<T> getBinParentTree(BinTree<T> rootTree, Long data) {
+        BinTree<T> leftTree = rootTree.getLeftTree();//10
+        BinTree<T> rightTree = rootTree.getRightTree();//20
+        Long rootData = rootTree.getData();
+        if (rootData.longValue() == data.longValue()) {
+            return rootTree;
+        }else if(leftTree!=null && leftTree.getData().longValue()==data.longValue()){
+            return rootTree;
+        }else if(rightTree!=null && rightTree.getData().longValue()==data.longValue()){
+            return rootTree;
+        }
+
+        if (leftTree != null && rootData.longValue() > data.longValue()) {
+            BinTree<T> binTree = getBinParentTree(leftTree, data);
+            if (binTree != null) {
+                return binTree;
+            }
+        }
+        if (rightTree != null && rootData.longValue() < data.longValue()) {
+            BinTree<T> binTree = getBinParentTree(rightTree, data);
+            if (binTree != null) {
+                return binTree;
+            }
+        }
+        return null;
+    }
     /**
      * 前序遍历
      */
