@@ -84,6 +84,9 @@ public class BinTree<T> {
     }
 
     public boolean updateNode( Long data, T object) {
+        if(getData()==null){
+            return false;
+        }
         return updateNode(this,data,object);
     }
 
@@ -114,6 +117,9 @@ public class BinTree<T> {
 
 
     public boolean delNote(Long data){
+        if(getData()==null){
+            return false;
+        }
         BinTree<T> parentTree= getBinParentTree(data);
         if(parentTree==null){
             return false;
