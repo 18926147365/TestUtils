@@ -23,6 +23,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 import com.sun.management.GarbageCollectorMXBean;
 
@@ -42,14 +43,10 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
     public static void main(String[] args) throws Exception {
-        BinTree<User> root = new BinTree<User>(null, null, 13l,new User("你好"));
-        root.addNode(12l,new User("测试"));
-        root.addNode(22l,new User("测试222"));
-        root.addNode(33l,new User("测试222"));
-        root.addNode(24l,new User("测试22322"));
-        root.inEach();
-        System.out.println("---");
-        String userId="a100001223";
+        String s1 = new String("runoob").intern();
+        String s2 = new String("runoob").intern();
+        System.out.println("s1 == s2 is:" + s1 == s2);
+
     }
 
 

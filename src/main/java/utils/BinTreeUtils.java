@@ -36,12 +36,19 @@ public class BinTreeUtils {
 
 
     public static void main(String[] args) {
-       BinTree<Long> rootTree=getRootBinTree("test",Long.class);
-       rootTree.addNode(22l);
-       rootTree.addNode(10l);
-       rootTree.addNode(40l);
-       rootTree.inEach();
+       BinTree<Long> root=getRootBinTree("test",Long.class);
+        root.addNode( 30l);
+        root.addNode( 25l);
+        root.addNode( 37l);
+//        root.addNode( 33l);
+//        root.addNode( 39l);
+        root.inEach();
+        System.out.println();
+        root.getTTT(49);
     }
+
+
+
 
     /**
      * 测试删除二叉树节点

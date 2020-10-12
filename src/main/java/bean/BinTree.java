@@ -402,4 +402,26 @@ public class BinTree<T> {
         return left >= right ? (left + 1) : (right + 1);
     }
 
+
+
+    public void addAVLNode(Long data){
+        if(getData()==null){
+            setData(data);
+            return;
+        }
+        addAVLNode(this,data);
+    }
+
+    private void addAVLNode(BinTree binTree,Long data){
+
+    }
+
+    public void getTTT(long tt){
+        BinTree leftTree=getLeftTree();
+        BinTree rightTree=getRightTree();
+        if(rightTree==null && leftTree==null){
+            System.out.println("可以直接插入");
+            return;
+        }
+    }
 }
