@@ -43,10 +43,8 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
     public static void main(String[] args) throws Exception {
-        String s1 = new String("runoob").intern();
-        String s2 = new String("runoob").intern();
-        System.out.println("s1 == s2 is:" + s1 == s2);
-
+      SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println(sdf.parse("2020-01-01 01:02:03").getTime());
     }
 
 
