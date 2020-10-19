@@ -10,6 +10,7 @@ import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import service.ModelService;
 import service.TestService;
 import system.LoggerProxy;
 import utils.BloomFilterUtils;
@@ -25,7 +27,9 @@ import utils.CsvUtils;
 import utils.RedisLuaUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.rmi.server.UID;
@@ -58,6 +62,9 @@ public class TestController {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private ModelService modelService;
     @RequestMapping("/report")
     public String report(HttpServletRequest request) throws Exception {
 
@@ -352,4 +359,140 @@ public class TestController {
         System.out.println(jdbcTemplate.queryForList(query, key.hashCode(), key));
     }
 
+
+    @RequestMapping("/test35")
+    public void test35(){
+
+
+        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString("modelss",10000000,0.02d);
+
+        ExecutorService pool = new ThreadPoolExecutor(5, 5, 5000,
+                        TimeUnit.MILLISECONDS,
+                        new LinkedBlockingQueue<>(),
+                        Executors.defaultThreadFactory(),
+                        new ThreadPoolExecutor.AbortPolicy());
+
+
+
+        long index=0;
+        String indexStr=redisLuaUtils.get("modelsIndex");
+        if(StringUtils.isNotBlank(indexStr)){
+            index=Long.valueOf(indexStr);
+        }
+        String sql="SELECT id,model FROM `activity_access_log` WHERE model IS NOT NULL AND systemos=1 ORDER BY id DESC LIMIT ?,5000";
+        for (int i = 0; i < 100; i++) {
+            pool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    long myIndex=redisLuaUtils.incrBy("modelsIndex",5000l);
+                    System.out.println(myIndex);
+                    List<Map<String,Object>> list=jdbcTemplate.queryForList(sql,myIndex);
+                    for (Map<String, Object> stringObjectMap : list) {
+                        String model=stringObjectMap.get("model")+"";
+                        if (bloomFilter.put(model)) {
+                            redisLuaUtils.lpush("modelLists",model);
+                        }
+                    }
+                }
+            });
+
+        }
+
+
+
+
+    }
+
+    @RequestMapping("/test36")
+    public void test36(){
+        String insertSql="insert into model (ua,ua_model,status) values(?,?,1)";
+        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString("phoneModel",1000000,0.02d);
+        int i=0;
+        do{
+            String ua= redisLuaUtils.lpop("modelLists");
+            if (StringUtils.isBlank(ua)) {
+                break;
+            }
+            System.out.println(i++);
+            String uaModel=getUAModel(ua);
+            if(uaModel==null){
+                continue;
+            }
+            if (!bloomFilter.put(uaModel)) {
+                continue;
+            }
+            String existsSql="select count(1) from model where ua_model = ?";
+            if((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel))>0){
+                continue;
+            }
+            jdbcTemplate.update(insertSql,ua,uaModel);
+        }while (true);
+
+
+
+    }
+
+
+    @RequestMapping("/test37")
+    public void test37(){
+        String insertSql="insert into model (ua,ua_model,status) values(?,?,1)";
+        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString("phoneModel",1000000,0.02d);
+        File file = new File("/Users/lihaoming/Desktop/1");
+        BufferedReader reader = null;
+        StringBuffer sbf = new StringBuffer();
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String ua;
+            while ((ua = reader.readLine()) != null) {
+                String uaModel=getUAModel(ua);
+                if(uaModel==null){
+                    continue;
+                }
+                if (!bloomFilter.put(uaModel)) {
+                    continue;
+                }
+                String existsSql="select count(1) from model where ua_model = ?";
+                if((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel))>0){
+                    continue;
+                }
+                try {
+                    jdbcTemplate.update(insertSql,ua,uaModel);
+                    System.out.println(uaModel);
+                } catch (DataAccessException e) {
+                    System.out.println("异常了");
+                }
+            }
+            System.out.println("完成");
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        }
+    }
+    private  String getUAModel(String ua){
+        if(ua.toLowerCase().contains("linux;")){//安卓判断
+            String[] uas=ua.split(";");
+            for (String s : uas) {
+                String uaTrim=(s.trim());
+                if(uaTrim.contains("Build/")){
+                    String[] uaModels=uaTrim.split(" Build/");
+                    if(uaModels.length!=0){
+                        return (uaModels[0]);
+                    }
+
+                }
+
+            }
+        }else if(ua.toLowerCase().contains("iPhone;")){
+            return "iPhone";
+        }
+        return null;
+    }
 }

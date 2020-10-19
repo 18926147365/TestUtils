@@ -19,8 +19,7 @@ public class ThreadExecutorPool {
 
     private static final String defalutPoolName="base_system";
 
-
-    public static ExecutorService getExecutorService(String poolName){
+    public static ExecutorService getExecutorService(String poolName,int coreSize,int maxSize){
 
         ExecutorService executorService=poolMap.get(poolName);
         if(executorService!=null){
@@ -33,7 +32,7 @@ public class ThreadExecutorPool {
                 return executorService;
             }
             //TODO 可以通过读数据获取配置
-             executorService = new ThreadPoolExecutor(100, 100, 10000,
+            executorService = new ThreadPoolExecutor(coreSize, maxSize, 10000,
                     TimeUnit.MILLISECONDS,
                     new LinkedBlockingQueue<>(),
                     Executors.defaultThreadFactory(),
@@ -43,6 +42,13 @@ public class ThreadExecutorPool {
             poolMap.put(poolName,executorService);
             return executorService;
         }
+    }
+
+
+
+    public static ExecutorService getExecutorService(String poolName){
+
+     return getExecutorService(poolName,100,100);
     }
 
 

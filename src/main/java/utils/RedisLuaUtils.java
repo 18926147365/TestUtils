@@ -55,6 +55,29 @@ public class RedisLuaUtils {
     private JedisPool jedisPool;
 
 
+
+
+    public String lpop(String key){
+        Jedis jedis = jedisPool.getResource();
+        try {
+
+            return jedis.lpop(key);
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public long lpush(String key,String... value){
+        Jedis jedis = jedisPool.getResource();
+        try {
+
+            return jedis.lpush(key,value);
+        } finally {
+            jedis.close();
+        }
+    }
+
+
     public boolean setbit(String key,String value){
         Jedis jedis = jedisPool.getResource();
         try {

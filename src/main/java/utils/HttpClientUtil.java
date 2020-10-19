@@ -539,15 +539,17 @@ public class HttpClientUtil {
 		}
 		return "";
 	}
-	
-	public  static String httpGet(String url){
+
+	public  static String httpBaiduGet(String url){
 		url = StringUtils.trim(url);
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		HttpGet httpGet = null;
 		try {
 			httpGet = new HttpGet(url);
 			httpGet.addHeader("Content-Type", "text/xml,charset=utf-8");
-			
+			httpGet.addHeader("Accept", "*/*");
+			httpGet.addHeader("Cookie","BAIDUID=5F35B5D5ABF5495B1395ED83784EE900:FG=1; PSTM=1600930585; BD_UPN=123253; BDUSS=ZyNXViZ1dYZUY2ZHBwLVFGUWY3bnF3ZThpbkthTUl2WWRyNlk3Q2hUd2JvS2hmSVFBQUFBJCQAAAAAAAAAAAEAAABigexgT21lbti8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABsTgV8bE4Ffcl; BDUSS_BFESS=ZyNXViZ1dYZUY2ZHBwLVFGUWY3bnF3ZThpbkthTUl2WWRyNlk3Q2hUd2JvS2hmSVFBQUFBJCQAAAAAAAAAAAEAAABigexgT21lbti8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABsTgV8bE4Ffcl; BDORZ=B490B5EBF6F3CD402E515D22BCDA1598; BIDUPSID=AE6645156C87F021FF10D46A70030903; delPer=0; BD_CK_SAM=1; PSINO=6; H_PS_PSSID=7509_32617_1434_32788_31253_32706_32230_7516_7605_32116_32719_22160; sug=3; sugstore=0; ORIGIN=0; bdime=21111; H_PS_645EC=314cxZvL1Af6M9hedju48ngFhr93uUP07jVnGeuSW33mp0ApfBYtYJDez%2F5sF9%2FM79cP; BA_HECTOR=2g008l24al250kjjt61fof8v90j; WWW_ST=1602724849763");
+
 			CloseableHttpResponse httpResponse = httpclient.execute(httpGet);
 			HttpEntity entity = httpResponse.getEntity();
 			InputStream responseBodyAsStream = entity.getContent();
@@ -555,7 +557,52 @@ public class HttpClientUtil {
 			String line = null;
 			BufferedReader br = null;
 			try {
-				InputStreamReader isr = new InputStreamReader(responseBodyAsStream, "gbk");
+				InputStreamReader isr = new InputStreamReader(responseBodyAsStream, "UTF-8");
+				br = new BufferedReader(isr);
+				while((line = br.readLine())!=null){
+					sb.append(line);
+				}
+			} catch (Exception e) {
+				System.out.println("报错啦。。。。。。。。。");
+			}finally{
+				br.close();
+			}
+
+			return sb.toString();
+		} catch (Exception e) {
+			if(httpGet!=null){
+				httpGet.abort();
+			}
+			e.printStackTrace();
+		} finally{
+			try {
+				if(httpclient!=null){
+					httpclient.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return "";
+	}
+
+
+	public  static String httpGet(String url){
+		url = StringUtils.trim(url);
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpGet httpGet = null;
+		try {
+			httpGet = new HttpGet(url);
+			httpGet.addHeader("Content-Type", "text/xml,charset=utf-8");
+
+			CloseableHttpResponse httpResponse = httpclient.execute(httpGet);
+			HttpEntity entity = httpResponse.getEntity();
+			InputStream responseBodyAsStream = entity.getContent();
+			StringBuffer sb = new StringBuffer();
+			String line = null;
+			BufferedReader br = null;
+			try {
+				InputStreamReader isr = new InputStreamReader(responseBodyAsStream, "UTF-8");
 				br = new BufferedReader(isr);
 				while((line = br.readLine())!=null){
 					sb.append(line);
