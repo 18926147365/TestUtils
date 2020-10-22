@@ -9,6 +9,10 @@ import com.google.common.util.concurrent.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
 import org.apache.commons.lang.StringUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,16 +20,21 @@ import org.springframework.web.bind.annotation.RestController;
 import service.ModelService;
 import service.TestService;
 import utils.CsvUtils;
+import utils.HttpClientUtil;
 import utils.RedisLuaUtils;
 import utils.ThreadExecutorPool;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author 李浩铭
@@ -57,9 +66,9 @@ public class ModelController {
             for (String s : uas) {
                 String uaTrim=(s.trim());
                 if(uaTrim.contains("Build/")){
-                    String[] uaModels=uaTrim.split(" Build/");
+                    String[] uaModels=uaTrim.split("Build/");
                     if(uaModels.length!=0){
-                        return (uaModels[0]);
+                        return (uaModels[0]).trim();
                     }
 
                 }
@@ -154,6 +163,61 @@ public class ModelController {
     public String reflushDict(){
         ModelService.dictMap=new HashMap<>();
         return "刷新dict成功";
+    }
+
+    @RequestMapping("/startSP")
+    public void startSP() throws Exception {
+        String papgeIndexRedisKey="startSP2:index";
+        long pageIndex=10;
+        int index=0;
+        String  url = "http://www.baidu.com/s?wd="+ URLEncoder.encode("Mozilla/5.0 (Linux; Android","UTF-8");
+        while (true){
+            int rand=(int)(Math.random()*3000)+1200;
+            Thread.sleep(rand);
+            pageIndex=redisLuaUtils.incrBy(papgeIndexRedisKey,10l);
+            String htmlResp=HttpClientUtil.httpBaiduGet(url+"&pn="+pageIndex);
+            Document doc = Jsoup.parse(htmlResp);
+            Elements elements=doc.getElementsByClass("c-container");
+            for (Element element : elements) {
+                Elements tele=element.getElementsByClass("t");
+                if(tele.size()==0){
+                    continue;
+                }
+                Elements aele=tele.get(0).getElementsByTag("a");
+                if(aele.size()==0){
+                    continue;
+                }
+                String href=(aele.get(0).attr("href"));
+                log.info("爬取网页地址:{}",href);
+                String modelResp= null;
+                index++;
+                if(index%20==0){
+                    Thread.sleep(20000);
+                }
+                try {
+                    Thread.sleep((int)(Math.random()*4000)+1200);
+                    modelResp = HttpClientUtil.httpBaiduGet(href);
+                } catch (Exception e) {
+                    System.out.println("请求页面异常");
+                    continue;
+                }
+                String patterStr="(?<=Mozilla/5.0 \\(Linux\\;)(.+?)(?=\\))";
+                Pattern pattern = Pattern.compile(patterStr);
+                Matcher matcher = pattern.matcher(modelResp);
+                while (matcher.find()){
+                    String ua=("Mozilla/5.0 (Linux; "+matcher.group()+"; wv)");
+                    String uaModel=getUAModel(ua);
+                    if(org.apache.commons.lang3.StringUtils.isBlank(uaModel)){
+                        continue;
+                    }
+                    log.info("抓取网页数据model:{}",uaModel);
+                    modelService.reModelAsync(ua);
+                }
+            }
+        }
+
+
+
     }
 
 }
