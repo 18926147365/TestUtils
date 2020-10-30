@@ -2,6 +2,13 @@ package utils;
 
 import com.sun.management.GarbageCollectorMXBean;
 import com.sun.management.GcInfo;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
@@ -28,52 +35,27 @@ public class Application {
     public static void main(String[] args) {
         System.setProperty("java.awt.headless", "false");
         SpringApplication.run(Application.class, args);
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                CopyUtils.listenerCopy();
-            }
-        });
-        thread.setDaemon(true);
-//        thread.start();
-//
-
-
-        Thread thread1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-
-
-                    GcInfo gci = gcMBean.getLastGcInfo();
-                    long duration = gci.getDuration();
-//                    System.out.println("gc花费时间：" + duration + "ms");
-
-                    Map<String, MemoryUsage> memoryUsageBeforeGc = gci.getMemoryUsageBeforeGc();
-                    Map<String, MemoryUsage> memoryUsageAfterGc = gci.getMemoryUsageAfterGc();
-                    memoryUsageBeforeGc.forEach((key, memory) -> {
-
-//                        log.info("{} Before GC:{}", key, memory);
-//                        MemoryUsage afterMemory = memoryUsageAfterGc.get(key);
-//                        log.info("{} After GC:{}", key,afterMemory);
+        NioEventLoopGroup boss=new NioEventLoopGroup(1);
+        NioEventLoopGroup worker=new NioEventLoopGroup(3);
+        try {
+            final ServerBootstrap server=new ServerBootstrap();
+            server.group(boss,worker).channel(NioServerSocketChannel.class)
+                    .childHandler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline pipeline = ch.pipeline();
+                            pipeline.addLast(new NettyServerHandler());
+                        }
                     });
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        });
-        thread1.setDaemon(true);
-//        thread1.start();
-
+            ChannelFuture future = server.bind(9000).sync();
+            future.channel().closeFuture().sync();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        finally {
+            boss.shutdownGracefully();
+            worker.shutdownGracefully();
+        }
 
     }
 
