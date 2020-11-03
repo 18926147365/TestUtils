@@ -1,8 +1,15 @@
 package utils;
 
+import com.taobao.api.internal.toplink.channel.ChannelException;
+import com.taobao.api.internal.toplink.channel.netty.NettyChannelSender;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.apache.commons.io.IOUtils;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @Description:
@@ -11,6 +18,19 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  */
 public class NettyServerHandler extends ChannelInboundHandlerAdapter {
 
+
+
+    public static  Map<String,ChannelHandlerContext> nettyClientMap=new ConcurrentHashMap<>();
+
+    public static void sendClientMsg(){
+        for (String channelId : nettyClientMap.keySet()) {
+          ChannelHandlerContext ctx= nettyClientMap.get(channelId);
+            ByteBuf newbuf=ctx.alloc().buffer(1024);
+            byte[] resp = "服务器响应值111".getBytes();
+            newbuf.writeBytes(resp);
+            ctx.writeAndFlush(newbuf);
+        }
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {//msg 其实就是个ByteBuf 对象
@@ -38,13 +58,18 @@ public class NettyServerHandler extends ChannelInboundHandlerAdapter {
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         String channelId = ctx.channel().id().asLongText();
         System.out.println("客户端进来，channelId为：" + channelId);
+        nettyClientMap.put(channelId,ctx);
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-
         String channelId = ctx.channel().id().asLongText();
         System.out.println("客户端被移除，channelId为：" + channelId);
+        if(nettyClientMap.containsKey(channelId)){
+            nettyClientMap.remove(channelId);
+        }
+
+
     }
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {

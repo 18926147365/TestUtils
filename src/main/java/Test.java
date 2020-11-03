@@ -43,9 +43,21 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
     public static void main(String[] args) throws Exception {
-      SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println(sdf.parse("2020-01-01 01:02:03").getTime());
+        List<String> list=new ArrayList<>();
+        int size=21;
+        for (int i = 0; i < size; i++) {
+            list.add(i+"");
+            if(i%20==0){
+                System.err.println(list);
+                list=new ArrayList<>();
+            }else if(i+1==size){
+                System.out.println(list);
+                list=new ArrayList<>();
+            }
+        }
     }
+
+
 
 
 

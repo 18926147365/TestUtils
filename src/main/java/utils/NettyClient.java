@@ -50,7 +50,7 @@ public class NettyClient {
     public static void main(String[] args) throws Exception {
         int port = 9000;
        NettyClient nettyClient= new NettyClient();
-       nettyClient.connect(port, "127.0.0.1");
+       nettyClient.connect(port, "42.194.205.61");
 
     }
 }

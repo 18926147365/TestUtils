@@ -347,9 +347,10 @@ public class TestController {
     @RequestMapping("/test34")
     public void test34(){
         String key="10001-1-d3648d14-99fc-4d55-8d9b-b7d48f6378b8";
-        jdbcTemplate.update("insert into test2 where hash_code=? and key=?",key.hashCode(),key);
+        jdbcTemplate.update("insert into test2 where hash_code=? and `key`=?",key.hashCode(),key);
         String query="select * from test2 where hash_code=? and `key`=?";
         System.out.println(jdbcTemplate.queryForList(query, key.hashCode(), key));
     }
+
 
 }
