@@ -43,8 +43,8 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
     public static void main(String[] args) throws Exception {
-        System.out.println("12312312");
-        System.out.println("测试2");
+        System.out.println("12312312222222");
+        System.out.println("123测123试12312");
     }
 
 
