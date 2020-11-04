@@ -44,7 +44,7 @@ public class Test {
 
     public static void main(String[] args) throws Exception {
         System.out.println("12312312222222");
-        System.out.println("123测123试12312");
+        System.out.println("123测123试1231112");
     }
 
 
