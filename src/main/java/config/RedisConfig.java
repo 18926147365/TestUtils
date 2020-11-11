@@ -39,18 +39,22 @@ public class RedisConfig {
     @Value("${redis.JmxEnabled}")
     private Boolean JmxEnabled;
 
+    @Value("${redis.password}")
+    private String password;
+
     @Bean
     public JedisPool jedisPoolFactory() {
         System.out.println("JedisPool注入开始...");
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
         jedisPoolConfig.setMaxIdle(maxIdle);
         jedisPoolConfig.setMaxTotal(maxTotal);
+
         jedisPoolConfig.setMaxWaitMillis(maxWaitMillis);
         // 连接耗尽时是否阻塞, false报异常,true阻塞直到超时, 默认true
         jedisPoolConfig.setBlockWhenExhausted(blockWhenExhausted);
         // 是否启用pool的jmx管理功能, 默认tru
         jedisPoolConfig.setJmxEnabled(JmxEnabled);
-        JedisPool jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout);
+        JedisPool jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout,password);
         System.out.println("JedisPool注入成功...");
         return jedisPool;
     }

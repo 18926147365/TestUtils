@@ -43,18 +43,15 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
     public static void main(String[] args) throws Exception {
-        List<String> list=new ArrayList<>();
-        int size=21;
-        for (int i = 0; i < size; i++) {
-            list.add(i+"");
-            if(i%20==0){
-                System.err.println(list);
-                list=new ArrayList<>();
-            }else if(i+1==size){
-                System.out.println(list);
-                list=new ArrayList<>();
-            }
+        while (true){
+            long time=new Date().getTime()/1000;
+            Thread.sleep(1000);
         }
+
+//        1604654814
+        //1604654865
+//        1604654843715
+
     }
 
 

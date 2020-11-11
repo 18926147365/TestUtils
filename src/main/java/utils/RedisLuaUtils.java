@@ -1,5 +1,6 @@
 package utils;
 
+import bean.BoxReject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ObjectUtils;
@@ -9,11 +10,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
+import redis.clients.jedis.params.sortedset.ZIncrByParams;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
@@ -36,8 +41,8 @@ public class RedisLuaUtils {
         HSETCACHE("/lua/hsetCache.lua"),
         HGETCACHE("/lua/hgetCache.lua"),
         HSETFIELDNX("/lua/hsetFieldnx.lua"),
-        GETREDISTIME("/lua/getRedisTime.lua");
-
+        GETREDISTIME("/lua/getRedisTime.lua"),
+        SETBOX("/lua/setbox.lua");
 
         private final String path;
 
@@ -54,16 +59,77 @@ public class RedisLuaUtils {
     @Autowired
     private JedisPool jedisPool;
 
+    /**
+     * 插入成功返回 ok
+     * 容器满时返回 full
+     * */
+    public String setBox(String boxName,Long boxSize,String key,String val,Integer expire,Integer keepAliveTime,BoxReject boxReject){
+        String evaResult = evalsha(ScriptLoadEnum.SETBOX, String.class, boxName, boxSize.toString(), key,val,expire.toString(),keepAliveTime.toString(),boxReject.name());
+        return evaResult;
+    }
+
+    public void test(String key){
+        Jedis jedis = null;
+        try (InputStream input = RedisLuaUtils.class.getResourceAsStream(ScriptLoadEnum.TEST.path)) {
+            jedis = jedisPool.getResource();
+
+            String testLua=(IOUtils.toString(input, StandardCharsets.UTF_8));
+            System.out.println(jedis.eval(testLua, 1, "testbox:z"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
 
     public boolean setbit(String key,String value){
         Jedis jedis = jedisPool.getResource();
         try {
+
            return jedis.setbit(key,1l,value);
         } finally {
             jedis.close();
         }
     }
 
+    public ScanResult<Map.Entry<String, String>> hscan(String key, String cursor, String pattern){
+        Jedis jedis = jedisPool.getResource();
+        try {
+            ScanParams scanParams=new ScanParams();
+            scanParams.match(pattern);
+            scanParams.count(10);
+            return jedis.hscan(key,cursor,scanParams);
+        } finally {
+            jedis.close();
+        }
+    }
+
+    public ScanResult<String> scan(String cursor, String pattern){
+        return scan(cursor, pattern,10);
+    }
+
+    public ScanResult<String> scan(String cursor, String pattern,int count){
+        Jedis jedis = jedisPool.getResource();
+        try {
+            ScanParams scanParams=new ScanParams();
+            scanParams.match(pattern);
+            scanParams.count(count);
+            return  jedis.scan(cursor,scanParams);
+        } finally {
+            jedis.close();
+        }
+    }
+    public Set<String> keys(String pattern){
+        Jedis jedis = jedisPool.getResource();
+        try {
+             return jedis.keys(pattern);
+        } finally {
+            jedis.close();
+        }
+    }
 
     public boolean getbit(String key,String value){
         Jedis jedis = jedisPool.getResource();
@@ -305,12 +371,22 @@ public class RedisLuaUtils {
     }
 
 
-    public boolean set(String key, String value, int timeout) {
+    public void hset(String key,String field,String val,int expire){
         Jedis jedis = jedisPool.getResource();
-
-
         try {
-            if ("OK".equals(jedis.setex(key, timeout, value))) {
+           jedis.hset(key,field,val);
+           jedis.expire(key,expire);
+        } finally {
+            jedis.close();
+        }
+    }
+    /**
+     * seconds 秒
+     * */
+    public boolean set(String key, String value, int expire) {
+        Jedis jedis = jedisPool.getResource();
+        try {
+            if ("OK".equals(jedis.setex(key, expire, value))) {
                 return true;
             }
             return false;
@@ -340,7 +416,56 @@ public class RedisLuaUtils {
             jedis.close();
         }
     }
+    /**
+     *
+     * */
+    public Double zincrby(String key,double score,String  member) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
 
+            return jedis.zincrby(key, score, member);
+        } finally {
+            jedis.close();
+        }
+    }
+
+    /**
+     *
+     * */
+    public long zrem(String key,String ... rems) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return jedis.zrem(key,rems);
+        } finally {
+            jedis.close();
+        }
+    }
+    /**
+     *
+     * */
+    public Long zcard(String key) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return jedis.zcard(key);
+        } finally {
+            jedis.close();
+        }
+    }
+    /**
+     *
+     * */
+    public long hIncrby(String key,String field,long value) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return jedis.hincrBy(key, field, value);
+        } finally {
+            jedis.close();
+        }
+    }
     public long incrBy(String key, Long value) {
         if (value == null) {
             value = 1l;
@@ -403,7 +528,17 @@ public class RedisLuaUtils {
             jedis.close();
         }
     }
-
+    public long expire(String key, int expire) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+          return jedis.expire(key,expire);
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
     public boolean pexpire(String key, long timeouts) {
         Jedis jedis = null;
         try {
@@ -417,8 +552,6 @@ public class RedisLuaUtils {
             }
         }
         return false;
-
-
     }
 
     public boolean unLock(String key) {
