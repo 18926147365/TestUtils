@@ -344,26 +344,23 @@ public class TestController {
             Executors.defaultThreadFactory(),
             new ThreadPoolExecutor.AbortPolicy());
 
+
     static {
         ((ThreadPoolExecutor) pools).allowCoreThreadTimeOut(true);
     }
 
+    static ExecutorService pool2= new ThreadPoolExecutor(1, 2, 111,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(300),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.DiscardPolicy());
+
     @RequestMapping("/t1")
     public void t1() {
-        int rand=(int)(Math.random()*1000);
-        String key="name:" + rand;
-        RedisBox redisBox = redisBoxUtils.getFifoBox("testbox", 30000, 30);
-        String val=redisBox.get(key);
-        if (StringUtils.isEmpty(val)) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            val=rand + "";
-            System.err.println(redisBox.set(key, val, 100));
-        }
-        System.out.println(val);
+        //0.85%
+        System.out.println(redisLuaUtils.pfadd("testssss", "!1"));
+
+
     }
 
 }

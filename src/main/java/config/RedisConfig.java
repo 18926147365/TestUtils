@@ -1,5 +1,6 @@
 package config;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,7 +55,12 @@ public class RedisConfig {
         jedisPoolConfig.setBlockWhenExhausted(blockWhenExhausted);
         // 是否启用pool的jmx管理功能, 默认tru
         jedisPoolConfig.setJmxEnabled(JmxEnabled);
-        JedisPool jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout,password);
+        JedisPool jedisPool;
+        if (StringUtils.isBlank(password)) {
+            jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout);
+        } else {
+            jedisPool = new JedisPool(jedisPoolConfig, host, port, timeout, password);
+        }
         System.out.println("JedisPool注入成功...");
         return jedisPool;
     }

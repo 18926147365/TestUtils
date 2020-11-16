@@ -7,6 +7,8 @@ import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 
 /**
  * @Description:
@@ -24,6 +26,8 @@ public class NettyServer {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             ChannelPipeline pipeline = ch.pipeline();
+                            pipeline.addLast(new NettyEncoder());
+                            pipeline.addLast(new NettyDecoder());
                             pipeline.addLast(new NettyServerHandler());
                         }
                     });
@@ -36,7 +40,5 @@ public class NettyServer {
             boss.shutdownGracefully();
             worker.shutdownGracefully();
         }
-
-
     }
 }

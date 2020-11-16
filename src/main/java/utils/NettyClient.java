@@ -10,6 +10,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import java.nio.charset.Charset;
@@ -33,6 +34,8 @@ public class NettyClient {
                         protected void initChannel(SocketChannel socketChannel)
                                 throws Exception {
                             System.out.println("client initChannel..");
+                            socketChannel.pipeline().addLast(new NettyEncoder());
+                            socketChannel.pipeline().addLast(new NettyDecoder());
                             socketChannel.pipeline().addLast(new NettyClientHandler());
 
                         }
@@ -50,7 +53,7 @@ public class NettyClient {
     public static void main(String[] args) throws Exception {
         int port = 9000;
        NettyClient nettyClient= new NettyClient();
-       nettyClient.connect(port, "42.194.205.61");
+       nettyClient.connect(port, "127.0.0.1");
 
     }
 }
