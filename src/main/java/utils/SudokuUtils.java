@@ -29,6 +29,14 @@ public class SudokuUtils {
     private int[][] sudoku = new int[9][9];
     private int[][] initSudoku = new int[9][9];
 
+
+    public static void main(String[] args) {
+        SudokuUtils sudokuUtils = new SudokuUtils();
+        sudokuUtils.setVal(1, 3, 5);
+        sudokuUtils.calcSudoKu();
+        sudokuUtils.printSudoKu(sudokuUtils.getSudoku());
+    }
+
     public int[][] getSudoku() {
         return sudoku;
     }
