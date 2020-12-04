@@ -1,38 +1,115 @@
 package utils;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import bean.BinTree;
+
+import java.util.*;
 
 /**
- * @Description: 暴力生成方法
+ * @Description:回溯算法计算
  * @Author: lihaoming
- * @Date: 2020/11/16 3:09 下午
+ * @Date: 2020/11/18 4:07 下午
  */
-public class SudokuUtils {
-//     0 1 2   3 4 5   6 7 8  ---x轴
-//     --------------------
-//  0  9 2 1 | 8 7 5 | 3 4 6
-//  1  6 4 3 | 9 1 2 | 5 7 8
-//  2  7 5 8 | 4 6 3 | 9 2 1
-//    ---------------------
-//  3  4 3 5 | 2 9 1 | 8 6 7
-//  4  8 7 9 | 6 5 4 | 1 3 2
-//  5  1 6 2 | 7 3 8 | 4 9 5
-//    ---------------------
-//  6  5 8 4 | 3 2 7 | 6 1 9
-//  7  2 1 6 | 5 4 9 | 7 8 3
-//  8  3 9 7 | 1 8 6 | 2 5 4
-//  y轴
-// 如x=1,y=3 值=3  x=5,y=6 值=7
+public class SudokuUtils2 {
 
     private int[][] sudoku = new int[9][9];
     private int[][] initSudoku = new int[9][9];
 
     public static void main(String[] args) {
-        SudokuUtils sudokuUtils = new SudokuUtils();
-//        sudokuUtils.setVal(1, 3, 5);
-        sudokuUtils.printSudoKu(sudokuUtils.calcSudoKu());
+        SudokuUtils2 sudokuUtils = new SudokuUtils2();
+
+        sudokuUtils.calcSudoKu();
+
+
+        for (int i = 0; i < 70; i++) {
+            int x=(int)(Math.random()*9);
+            int y=(int)(Math.random()*9);
+            sudokuUtils.sudoku[x][y]=0;
+        }
+        int[][] backUp=new int[9][9];
+        sudokuUtils.copy(sudokuUtils.getSudoku(),backUp);
+
+        List<String> bigTempList = new ArrayList<>();
+        a:for (int i = 0; i < 9; i++) {
+            List<String> tempList = new ArrayList<>();
+            for (int j = 0; j < 9; j++) {
+                int val=sudokuUtils.sudoku[j][i];
+                if(val!=0)continue;
+                tempList=getList(tempList,sudokuUtils.getxyou(j,i));
+            }
+            bigTempList=getList2(bigTempList,tempList);
+            System.out.println(tempList);
+        }
+        sudokuUtils.printSudoKu(sudokuUtils.getSudoku());
+
+
+
+        System.out.println("-----");
+        int index=0;
+        c:for (String str : bigTempList) {
+            String[] strs = str.split("");
+            int k=0;
+            a:for (int i = 0; i < 9; i++) {
+                for (int j = 0; j < 9; j++) {
+                    int val=sudokuUtils.sudoku[j][i];
+                    if(val!=0)continue;
+
+                    if (sudokuUtils.getxyou(j,i).length==0) {
+                        sudokuUtils.copy(backUp,sudokuUtils.getSudoku());
+                       continue c;
+                    }else{
+                        sudokuUtils.sudoku[j][i]=Integer.valueOf(strs[k++]);
+                    }
+                }
+            }
+        }
+        sudokuUtils.printSudoKu(sudokuUtils.getSudoku());
+    }
+
+    private static boolean isTest(){
+
+
+        return true;
+    }
+
+    private static List<String> getList2(List<String> list, List<String> iList) {
+        if (list == null || list.size() == 0) {
+            list = new ArrayList<>();
+            for (String i : iList) {
+                list.add(i );
+            }
+            return list;
+        }
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            for (int j = 0; j < iList.size(); j++) {
+                String val = list.get(i);
+                String data = iList.get(j);
+                result.add(val + data);
+            }
+        }
+        return result;
+    }
+
+    private static List<String> getList(List<String> list, int[] iList) {
+        if (list == null || list.size() == 0) {
+            list = new ArrayList<>();
+            for (Integer i : iList) {
+                list.add(i + "");
+            }
+            return list;
+        }
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            for (int j = 0; j < iList.length; j++) {
+                String val = list.get(i);
+                String data = iList[j] + "";
+                if (val.contains(data)) {
+                    continue;
+                }
+                result.add(val + data);
+            }
+        }
+        return result;
     }
 
     public int[][] getSudoku() {
@@ -42,39 +119,13 @@ public class SudokuUtils {
     public int[][] calcSudoKu() {
         copy(this.sudoku, this.initSudoku);
         try {
-            long count=0;
-            while (true){
-                copy(initSudoku, sudoku);
-                calc();
-                int k=getNullNum();
-                count++;
-                if(k==0){
-                    break;
-                }
-            }
-            System.out.println("计算次数:"+count);
+            calc();
         } catch (Exception e) {
-//            throw new RuntimeException("无计算结果");
+            throw new RuntimeException("无计算结果");
         }
         return this.sudoku;
     }
 
-    public int getNullNum() {
-        int k = 0;
-        for (int i = 0; i < sudoku.length; i++) {
-            for (int j = 0; j < sudoku[i].length; j++) {
-                int val = sudoku[j][i];
-                if (val == 0) {
-                    k++;
-                }
-            }
-        }
-        return k;
-    }
-
-    public void setV(int x, int y, int val) {
-        sudoku[x][y] = val;
-    }
     public void setVal(int x, int y, int val) {
         if (x < 0 && x > 8) {
             throw new RuntimeException("x值范围[0-8]");
@@ -87,12 +138,13 @@ public class SudokuUtils {
         }
         int[] ex = getxyou(x, y);
         for (int data : ex) {
+
             if (data == val) {
                 sudoku[x][y] = val;
                 return;
             }
         }
-//        throw new RuntimeException(String.format("val值冲突 坐标值:%s,%s  值:%s", x, y, val));
+        throw new RuntimeException(String.format("val值冲突 坐标值:%s,%s  值:%s", x, y, val));
     }
 
     public Integer getVal(int x, int y) {
@@ -117,27 +169,49 @@ public class SudokuUtils {
         return this.sudoku;
     }
 
-
     private void calc() {
         for (int i = 0; i < sudoku.length; i++) {
+            int tempIndex=0;
             for (int j = 0; j < sudoku[i].length; j++) {
                 int val = sudoku[j][i];
                 if (val == 0) {
                     int[] datas = getxyou(j, i);
 
                     if (datas.length == 0) {
-//                        copy(initSudoku, sudoku);
-//                        calc();
+                        copy(initSudoku, sudoku);
+                        calc();
                         return;
                     }
+
                     int rand = (int) (Math.random() * datas.length);
                     sudoku[j][i] = datas[rand];
                 }
             }
         }
-
     }
 
+    //获取上一个左边x,y
+    private int[] getLastxy(int x,int y){
+        int[] xy={0,0};
+        if(x==0 && y==0){
+            return xy;
+        }
+        if(x==0){
+            y--;
+            x=8;
+        }else{
+            x--;
+        }
+        xy[0]=x;
+        xy[1]=y;
+        return xy;
+    }
+    private void printx(int[] str){
+        for (int i : str) {
+            System.out.print(i);
+        }
+        System.out.println();
+    }
     //根据x,y 获取x整行，y整列，归属9格中剩余可填值
     private int[] getxyou(int x, int y) {
         int num = getOuNum(x, y);
@@ -224,4 +298,5 @@ public class SudokuUtils {
             }
         }
     }
+
 }

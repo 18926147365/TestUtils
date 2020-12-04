@@ -2,7 +2,7 @@ package controller;
 
 import org.redisson.Redisson;
 import org.springframework.util.StringUtils;
-import utils.RedisBox;
+import utils.*;
 import bean.BoxReject;
 import bean.User;
 import com.alibaba.fastjson.JSONObject;
@@ -15,9 +15,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import service.TestService;
-import utils.CsvUtils;
-import utils.RedisBoxUtils;
-import utils.RedisLuaUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -26,6 +23,8 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author 李浩铭
@@ -309,32 +308,13 @@ public class TestController {
 
     }
 
-    @RequestMapping("/test33")
-    public void test33() {
-//        String sql="insert into test2 (hash_code,`key`) value";
-//
-//        List<String> list=new ArrayList<>();
-//        int k=0;
-//        for (int i = 0; i < 20000000; i++) {
-//            String  key=String.format("10001-1-%s",UUID.randomUUID().toString());
-//            int hashCode=key.hashCode();
-//            list.add("("+hashCode+",'"+key+"')");
-//            if(i%2000==0){
-//                k++;
-//                System.out.println((double)k/(double)10000);
-//                jdbcTemplate.update(sql+String.join(",", list));
-//                list=new ArrayList<>();
-//            }
-//
-//        }
-        System.out.println("完成");
-    }
-
+  
     @RequestMapping("/test34")
     public void test34() {
         String key = "10001-1-d3648d14-99fc-4d55-8d9b-b7d48f6378b8";
-        jdbcTemplate.update("insert into test2 where hash_code=? and `key`=?", key.hashCode(), key);
+//        jdbcTemplate.update("insert into test2 where hash_code=? and `key`=?", key.hashCode(), key);
         String query = "select * from test2 where hash_code=? and `key`=?";
+        System.out.println(testService.getName());
         System.out.println(jdbcTemplate.queryForList(query, key.hashCode(), key));
     }
 
@@ -356,11 +336,23 @@ public class TestController {
             new ThreadPoolExecutor.DiscardPolicy());
 
     @RequestMapping("/t1")
-    public void t1() {
-        //0.85%
-        System.out.println(redisLuaUtils.pfadd("testssss", "!1"));
+    public String t1(String name) {
+        String key="bitmapTests-1";
+        String key1="bitmapTests-2";
+        for (int i = 0; i < 100000; i++) {
+//            int rand=(int)(Math.random()*2);
+//            redisLuaUtils.setbit(key,i,rand+"");
+//            int rand1=(int)(Math.random()*2);
+//            redisLuaUtils.setbit(key1,i,rand1+"");
+        }
 
+        redisLuaUtils.tests();
+        return "1";
+    }
 
+    @RequestMapping("/t33")
+    public String t33(){
+        return "t2";
     }
 
 }

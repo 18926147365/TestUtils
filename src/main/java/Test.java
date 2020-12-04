@@ -1,3 +1,4 @@
+import bean.AwardType;
 import bean.BinTree;
 import bean.User;
 import com.alibaba.fastjson.JSONObject;
@@ -5,12 +6,13 @@ import com.clearspring.analytics.stream.frequency.CountMinSketch;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.sun.management.GcInfo;
+import io.lettuce.core.ScriptOutputType;
 import javafx.scene.paint.Stop;
 import javassist.*;
 import javassist.bytecode.MethodInfo;
 import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.checkerframework.checker.units.qual.C;
 import utils.*;
@@ -18,11 +20,15 @@ import utils.*;
 import java.io.Console;
 import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.Charset;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.sun.management.GarbageCollectorMXBean;
@@ -43,9 +49,66 @@ public class Test {
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
     public static void main(String[] args) throws Exception {
-        SudokuUtils sudokuUtils=new SudokuUtils();
-        sudokuUtils.calcSudoKu();
-        sudokuUtils.printSudoKu(sudokuUtils.getSudoku());
+        String content="3GB+32GB全网通版是一款主打拍照和影音的手机,5.0英寸的小机身颜值颇高。3GB";
+
+
+
+    }
+
+
+
+    //50 100
+    private static BigDecimal getCount(BigDecimal count, int num, int max) {
+        if (num == 1) {
+            return count;
+        }
+        double base = count.divide(new BigDecimal(num), 2, RoundingMode.DOWN).doubleValue() - 0.1;
+        double my = count.divide(new BigDecimal(num), 2, RoundingMode.DOWN).doubleValue();
+
+        for (int i = 0; i < num; i++) {
+//            double randBase = base;
+            double randBase = (base );
+            int luck=(int)(Math.random()*100);
+            if(luck<60){
+
+            }
+            double rand = (Math.random() * randBase) - (Math.random() * randBase);
+            if (my + rand < 0) {
+                continue;
+            }
+            my = my + rand;
+        }
+
+
+        BigDecimal bg = new BigDecimal(my).setScale(2, RoundingMode.DOWN);
+        if (count.subtract(bg).doubleValue() < 0.1 || bg.doubleValue() == 0) {
+            return new BigDecimal("0.1");
+        }
+        return bg;
+
+
+    }
+
+    private static List<String> getList(List<String> list, List<Integer> iList) {
+        if (list == null || list.size() == 0) {
+            list = new ArrayList<>();
+            for (Integer i : iList) {
+                list.add(i + "");
+            }
+            return list;
+        }
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            for (int j = 0; j < iList.size(); j++) {
+                String val = list.get(i);
+                String data = iList.get(j) + "";
+                if (val.contains(data)) {
+                    continue;
+                }
+                result.add(val + data);
+            }
+        }
+        return result;
     }
 
     public static void httpMarket() {

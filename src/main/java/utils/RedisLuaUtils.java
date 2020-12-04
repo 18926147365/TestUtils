@@ -8,10 +8,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
+import redis.clients.jedis.*;
 import redis.clients.jedis.params.sortedset.ZIncrByParams;
 
 import java.io.InputStream;
@@ -68,31 +65,47 @@ public class RedisLuaUtils {
         return evaResult;
     }
 
-    public void test(String key){
-        Jedis jedis = null;
-        try (InputStream input = RedisLuaUtils.class.getResourceAsStream(ScriptLoadEnum.TEST.path)) {
-            jedis = jedisPool.getResource();
-
-            String testLua=(IOUtils.toString(input, StandardCharsets.UTF_8));
-            System.out.println(jedis.eval(testLua, 1, "testbox:z"));
-        } catch (Exception e) {
-            e.printStackTrace();
+    public boolean setbit(String key,long offset,String value){
+        Jedis jedis = jedisPool.getResource();
+        try {
+            return jedis.setbit(key,offset,value);
         } finally {
-            if (jedis != null) {
-                jedis.close();
-            }
+            jedis.close();
+        }
+    }
+
+    public void tests(){
+        String key="bitmapTests-1";
+        String key1="bitmapTests-2";
+        String key2="bitmapTests-3";
+        Jedis jedis = jedisPool.getResource();
+        try {
+        } finally {
+            jedis.close();
         }
     }
 
 
-    public boolean setbit(String key,String value){
+    public boolean getBit(String key){
         Jedis jedis = jedisPool.getResource();
         try {
-
-           return jedis.setbit(key,1l,value);
+            return jedis.getbit(key,1l);
         } finally {
             jedis.close();
         }
+    }
+    public boolean getBit(String key,long offset){
+        Jedis jedis = jedisPool.getResource();
+        try {
+
+
+            return jedis.getbit(key,offset);
+        } finally {
+            jedis.close();
+        }
+    }
+    public boolean setbit(String key,String value){
+        return setbit(key,1l, value);
     }
 
     public ScanResult<Map.Entry<String, String>> hscan(String key, String cursor, String pattern){
@@ -131,7 +144,7 @@ public class RedisLuaUtils {
         }
     }
 
-    public boolean getbit(String key,String value){
+    public boolean getbit(String key){
         Jedis jedis = jedisPool.getResource();
         try {
 

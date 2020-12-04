@@ -1,5 +1,6 @@
 package service;
 
+import bean.User;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -22,9 +23,13 @@ public class TestService {
         System.out.println("test");
     }
 
+    public String testP(User user){
+        System.out.println(user.getId());
+        return user.getName();
+    }
     public String getName(){
         try {
-            Thread.sleep(10000);
+            Thread.sleep(1000);
 
         } catch (InterruptedException e) {
             e.printStackTrace();
