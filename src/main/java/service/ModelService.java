@@ -150,7 +150,7 @@ public class ModelService {
         if((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel))>0){
             return;
         }
-        
+
         List<String> dataList=getContentList(ua);
         String insertSql="INSERT INTO model (`status`,ua,ua_model,sp_data,brand,brands,model) VALUES(?,?,?,?,?,?,?);";
         IModel iModel=(getIModel(dataList, uaModel));
@@ -162,32 +162,6 @@ public class ModelService {
             log.info("解析成功:{} 品牌：{}",uaModel,iModel.getBrand());
             jdbcTemplate.update(insertSql,status,ua,uaModel,JSONArray.toJSONString(dataList),iModel.getBrand(),JSONArray.toJSONString(iModel.getBrands()),iModel.getModel());
         }
-    }
-
-    static ExecutorService poolAsync = new ThreadPoolExecutor(1, 1, 5000,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(),
-            Executors.defaultThreadFactory(),
-            new ThreadPoolExecutor.AbortPolicy());
-
-    public void reModelAsync(String ua){
-        String uaModel=getUAModel(ua);
-        if(uaModel==null){
-            return;
-        }
-        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString("phoneModel",1000000,0.02d);
-        if (!bloomFilter.put(uaModel)) {
-            return;
-        }
-        String existsSql="select count(1) from model where ua_model = ?";
-        if((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel))>0){
-            return;
-        }
-        String insertSql="INSERT INTO model (`status`,ua,ua_model) VALUES(?,?,?);";
-        jdbcTemplate.update(insertSql,1,ua,uaModel);
-
-
-
     }
 
 
@@ -206,10 +180,11 @@ public class ModelService {
         String  url = null;
         try {
             url = "http://www.baidu.com/s?wd="+ URLEncoder.encode(uaModel,"UTF-8");
+            return httpClientSp(url);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-        return httpClientSp(url);
+        return null;
     }
 
     private  List<String> httpClientSp(String url){
@@ -241,9 +216,9 @@ public class ModelService {
             for (String s : uas) {
                 String uaTrim=(s.trim());
                 if(uaTrim.contains("Build/")){
-                    String[] uaModels=uaTrim.split("Build/");
+                    String[] uaModels=uaTrim.split(" Build/");
                     if(uaModels.length!=0){
-                        return (uaModels[0]).trim();
+                        return (uaModels[0]);
                     }
 
                 }

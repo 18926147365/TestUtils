@@ -17,7 +17,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import utils.*;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
@@ -81,51 +84,45 @@ public class Test {
 
 
     public static void main(String[] args) throws Exception {
-        test1();
-    }
 
 
-    private static List<String> test1() throws Exception {
-        String  url = "http://www.baidu.com/s?wd="+ URLEncoder.encode("Mozilla/5.0 (Linux; Android","UTF-8");
-        String htmlResp=HttpClientUtil.httpBaiduGet(url);
-        Document doc = Jsoup.parse(htmlResp);
+//
+        File file = new File("/Users/lihaoming/Downloads/手机UA大全.txt");
+        BufferedReader reader = null;
+        StringBuffer sbf = new StringBuffer();
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String tempStr;
+            while ((tempStr = reader.readLine()) != null) {
+                System.out.println(getUAModel(tempStr));
 
-        Elements elements=doc.getElementsByClass("c-container");
-        for (Element element : elements) {
-            Elements tele=element.getElementsByClass("t");
-            if(tele.size()==0){
-                continue;
             }
-            Elements aele=tele.get(0).getElementsByTag("a");
-            if(aele.size()==0){
-                continue;
-            }
-            String href=(aele.get(0).attr("href"));
-            System.out.println(href);
-            String modelResp= null;
-            try {
-                modelResp = HttpClientUtil.httpBaiduGet(href);
-            } catch (Exception e) {
-                System.out.println("请求页面异常");
-                continue;
-            }
-
-            String patterStr="(?<=Mozilla/5.0 \\(Linux\\;)(.+?)(?=\\))";
-            Pattern pattern = Pattern.compile(patterStr);
-            Matcher matcher = pattern.matcher(modelResp);
-            while (matcher.find()){
-                String ua=("Mozilla/5.0 (Linux; "+matcher.group()+"; wv)");
-                String uaModel=getUAModel(ua);
-                if(StringUtils.isBlank(uaModel)){
-                    continue;
+            reader.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
                 }
-
             }
-
         }
-        return null;
-
+        System.out.println(getUAModel("Mozilla/5.0 (Linux; U; Android 4.4.2; zh-cn; H60-L03 Build/HDH60-L03) AppleWebKit/537.36 (KHTML, like Gecko)Version/4.0 Chrome/37.0.0.0 MQQBrowser/7.2 Mobile Safari/537.36\n"));
+        
+//     String  url = "http://www.baidu.com/s?wd="+ URLEncoder.encode("SM-N900S","UTF-8");
+////        String url="http://so.romzhijia.net/cse/search?s=12725138872909822094&q="+ URLEncoder.encode("SM-N900S","UTF-8");
+//        String htmlResp=HttpClientUtil.httpBaiduGet(url);
+//        System.out.println(htmlResp);
+//        Document doc = Jsoup.parse(htmlResp);
+//        Elements elements=doc.getElementsByClass("c-abstract");
+//        for (Element element : elements) {
+//            String text=element.text();
+//            System.out.println(text);
+//        }
     }
+
     private static IModel getIModel(List<String> uaModellist){
         Map<String,Integer> totalMap=new HashMap<>();
         Map<String,Integer> modelMap=new HashMap<>();
