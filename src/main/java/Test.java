@@ -9,6 +9,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 
+import javafx.concurrent.Task;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -24,6 +25,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -47,6 +50,283 @@ public class Test {
     private static final String GC_BEAN_NAME =
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
+
+    public static void main(String[] args) throws Exception {
+//        int[] list = {6,1,5,9,3,4,7,10,8,2};
+
+        for (int k = 0; k < 1; k++) {
+            int total = 8;
+            int[] list = new int[total];
+            for (int i = 0; i < total; i++) {
+                int rand=(int)(Math.random()*100);
+                list[i]=rand;
+            }
+            printList(list);
+            StopWatch stopWatch= new StopWatch();
+            stopWatch.start();
+            quickSort(list,0,list.length);
+            stopWatch.stop();
+//            System.out.println("耗时:" + (new BigDecimal(stopWatch.getNanoTime()).divide(new BigDecimal(1000*1000),2,RoundingMode.DOWN)) +"ms");
+            Thread.sleep(1000);
+            printList(list);
+        }
+
+        CountDownLatch countDownLatch =new CountDownLatch(1);
+        countDownLatch.await();
+    }
+    static ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
+            TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(),
+            Executors.defaultThreadFactory(),
+            new ThreadPoolExecutor.AbortPolicy());
+    private static void quickSort(int[] list, int start, int end) {
+
+        if (end - start <= 2) {
+            if (end - start == 2) {
+                if (list[start] > list[end - 1]) {
+                    int temp = list[start];
+                    list[start] = list[end - 1];
+                    list[end - 1] = temp;
+                }
+            }
+            return;
+        }
+        int base = list[start];//11
+        int i = start;
+        int j = end;
+        a:
+        for (int k = start + 1; k < end; k++) {
+            if (i >= j) {
+                break a;
+            }
+            int rval = list[--j];//7
+            while (rval > base) {
+                if (i == j) {
+                    break a;
+                }
+                if (i + 1 == j) {
+                    break;
+                }
+                rval = list[--j];
+            }
+            if (i == j) {
+                list[start] = rval;//4
+                list[i] = base;//44
+                break a;
+            }
+            int lval = list[++i];
+            while (lval < base) {
+                if (i == j) {
+                    list[start] = lval;
+                    list[j] = base;
+                    break a;
+                }
+                lval = list[++i];
+            }
+            list[i] = rval;
+            list[j] = lval;
+        }
+        final int is= i;
+        pool.submit(new Runnable() {
+            @Override
+            public void run() {
+                quickSort(list, start, is);
+            }
+        });
+        pool.submit(new Runnable() {
+            @Override
+            public void run() {
+                quickSort(list, is, end);
+            }
+        });
+//        FutureTask task = new FutureTask();
+    }
+
+
+    public static int[] ShellSort(int[] array) {
+        int len = array.length;
+        int temp, gap = len / 2;
+        while (gap > 0) {
+            for (int i = gap; i < len; i++) {
+                temp = array[i];
+                int preIndex = i - gap;
+                while (preIndex >= 0 && array[preIndex] > temp) {
+                    array[preIndex + gap] = array[preIndex];
+                    preIndex -= gap;
+                }
+                array[preIndex + gap] = temp;
+            }
+            gap /= 2;
+        }
+        return array;
+    }
+    public static int[] insertionSort(int[] array) {
+        if (array.length == 0)
+            return array;
+        int current;
+        for (int i = 0; i < array.length - 1; i++) {
+            current = array[i + 1];
+            int preIndex = i;
+            while (preIndex >= 0 && current < array[preIndex]) {
+                array[preIndex + 1] = array[preIndex];
+                preIndex--;
+            }
+            array[preIndex + 1] = current;
+        }
+        return array;
+    }
+    //选择排序
+    public static int[] selectionSort(int[] array) {
+        if (array.length == 0)
+            return array;
+        for (int i = 0; i < array.length; i++) {
+            int minIndex = i;
+            for (int j = i; j < array.length; j++) {
+                if (array[j] < array[minIndex]) //找到最小的数
+                    minIndex = j; //将最小数的索引保存
+            }
+            int temp = array[minIndex];
+            array[minIndex] = array[i];
+            array[i] = temp;
+        }
+        return array;
+    }
+
+
+    private static void maobao(int[] arr) {
+        for (int i = 0; i < arr.length - 1; i++) {
+            for (int j = 0; j < arr.length - 1 - i; j++) {
+                if (arr[j] > arr[j + 1]) {
+                    int temp = arr[j];
+                    arr[j] = arr[j + 1];
+                    arr[j + 1] = temp;
+                }
+            }
+        }
+    }
+
+
+
+
+    private static void printList(int[] list, int st, int end) {
+        for (int i = st; i < list.length; i++) {
+            if (i == end) {
+                break;
+            }
+            System.out.print(list[i] + ",");
+
+        }
+        System.out.println();
+    }
+
+    private static void printList(int[] list) {
+        for (int i1 : list) {
+            System.out.print(i1 + ",");
+        }
+        System.out.println();
+    }
+
+    public static <T> List<T> getPageByList(List<T> resourceList, int pageIndex, int pageSize) {
+        List<T> pageList = new ArrayList<>();
+        if (pageIndex < 1) {
+            pageIndex = 1;
+        }
+        int size = resourceList.size();
+        int pageCount = size / pageSize;
+        int fromIndex = (pageIndex - 1) * pageSize;
+        int toIndex = fromIndex + pageSize;
+        if (toIndex >= size) {
+            toIndex = size;
+        }
+        if (pageIndex > pageCount + 1) {
+            fromIndex = 0;
+            toIndex = 0;
+        }
+        pageList = resourceList.subList(fromIndex, toIndex);
+        return pageList;
+    }
+
+    public static ListNode mergeTwoLists(ListNode l1, ListNode l2) {
+        //        ListNode l1 = new ListNode(1,new ListNode(2,new ListNode(4)));
+//        ListNode l2 = new ListNode(3,new ListNode(4,new ListNode(7)));
+//        mergeTwoLists(l1,l2);
+        ListNode next = l1.next;
+        if (next != null) {
+            mergeTwoLists(next, l2);
+        }
+        System.out.println(l1.val);
+        return null;
+    }
+
+
+    public static class ListNode {
+        int val;
+        ListNode next;
+
+        ListNode() {
+        }
+
+        ListNode(int val) {
+            this.val = val;
+        }
+
+        ListNode(int val, ListNode next) {
+            this.val = val;
+            this.next = next;
+        }
+    }
+
+
+    public static boolean isValid(String s) {
+        Stack<Character> stack = new Stack<>();
+        Map<String, String> map = new HashMap<>();
+        map.put("}", "{");
+        map.put(")", "(");
+        map.put("]", "[");
+        for (char c : s.toCharArray()) {
+            String str = String.valueOf(c);
+            if (map.containsKey(str)) {
+                if (stack.size() == 0) {
+                    return false;
+                }
+                char temp = stack.pop();
+                if (!map.get(str).equals(String.valueOf(temp))) {
+                    return false;
+                }
+            } else {
+                stack.add(c);
+            }
+        }
+        return stack.isEmpty();
+    }
+
+    public static int reverse(int x) {
+        if (x == 0 || x == Integer.MIN_VALUE) {
+            return 0;
+        }
+        StringBuilder sbuilder = new StringBuilder(Math.abs(x) + "");
+        sbuilder.reverse();
+        long num = Long.parseLong((x < 0 ? "-" : "") + sbuilder.toString());
+        if (num > Integer.MAX_VALUE || num < Integer.MIN_VALUE) {
+            return 0;
+        }
+        return (int) num;
+    }
+
+    private static String getOverStr(String str1, String str2) {
+        if (str1.equals("") || str2.equals("")) {
+            return "";
+        }
+        StringBuilder sbuilder = new StringBuilder();
+        for (int i = 0; i < str1.length(); i++) {
+            if (i < str2.length() && str1.charAt(i) == str2.charAt(i)) {
+                sbuilder.append(str1.charAt(i));
+            } else {
+                break;
+            }
+        }
+        return sbuilder.toString();
+    }
 
     private static void tests() {
         String moneys = "0.11";
