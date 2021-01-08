@@ -50,212 +50,30 @@ public class Test {
     private static final String GC_BEAN_NAME =
             "java.lang:type=GarbageCollector,name=ConcurrentMarkSweep";
 
-
-    public static void main(String[] args) throws Exception {
-//        int[] list = {6,1,5,9,3,4,7,10,8,2};
-
-        for (int k = 0; k < 1; k++) {
-            int total = 8;
-            int[] list = new int[total];
-            for (int i = 0; i < total; i++) {
-                int rand=(int)(Math.random()*100);
-                list[i]=rand;
-            }
-            printList(list);
-            StopWatch stopWatch= new StopWatch();
-            stopWatch.start();
-            quickSort(list,0,list.length);
-            stopWatch.stop();
-//            System.out.println("耗时:" + (new BigDecimal(stopWatch.getNanoTime()).divide(new BigDecimal(1000*1000),2,RoundingMode.DOWN)) +"ms");
-            Thread.sleep(1000);
-            printList(list);
-        }
-
-        CountDownLatch countDownLatch =new CountDownLatch(1);
-        countDownLatch.await();
-    }
-    static ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
-            TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(),
-            Executors.defaultThreadFactory(),
-            new ThreadPoolExecutor.AbortPolicy());
-    private static void quickSort(int[] list, int start, int end) {
-
-        if (end - start <= 2) {
-            if (end - start == 2) {
-                if (list[start] > list[end - 1]) {
-                    int temp = list[start];
-                    list[start] = list[end - 1];
-                    list[end - 1] = temp;
-                }
-            }
-            return;
-        }
-        int base = list[start];//11
-        int i = start;
-        int j = end;
-        a:
-        for (int k = start + 1; k < end; k++) {
-            if (i >= j) {
-                break a;
-            }
-            int rval = list[--j];//7
-            while (rval > base) {
-                if (i == j) {
-                    break a;
-                }
-                if (i + 1 == j) {
-                    break;
-                }
-                rval = list[--j];
-            }
-            if (i == j) {
-                list[start] = rval;//4
-                list[i] = base;//44
-                break a;
-            }
-            int lval = list[++i];
-            while (lval < base) {
-                if (i == j) {
-                    list[start] = lval;
-                    list[j] = base;
-                    break a;
-                }
-                lval = list[++i];
-            }
-            list[i] = rval;
-            list[j] = lval;
-        }
-        final int is= i;
-        pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                quickSort(list, start, is);
-            }
-        });
-        pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                quickSort(list, is, end);
-            }
-        });
-//        FutureTask task = new FutureTask();
-    }
-
-
-    public static int[] ShellSort(int[] array) {
-        int len = array.length;
-        int temp, gap = len / 2;
-        while (gap > 0) {
-            for (int i = gap; i < len; i++) {
-                temp = array[i];
-                int preIndex = i - gap;
-                while (preIndex >= 0 && array[preIndex] > temp) {
-                    array[preIndex + gap] = array[preIndex];
-                    preIndex -= gap;
-                }
-                array[preIndex + gap] = temp;
-            }
-            gap /= 2;
-        }
-        return array;
-    }
-    public static int[] insertionSort(int[] array) {
-        if (array.length == 0)
-            return array;
-        int current;
-        for (int i = 0; i < array.length - 1; i++) {
-            current = array[i + 1];
-            int preIndex = i;
-            while (preIndex >= 0 && current < array[preIndex]) {
-                array[preIndex + 1] = array[preIndex];
-                preIndex--;
-            }
-            array[preIndex + 1] = current;
-        }
-        return array;
-    }
-    //选择排序
-    public static int[] selectionSort(int[] array) {
-        if (array.length == 0)
-            return array;
-        for (int i = 0; i < array.length; i++) {
-            int minIndex = i;
-            for (int j = i; j < array.length; j++) {
-                if (array[j] < array[minIndex]) //找到最小的数
-                    minIndex = j; //将最小数的索引保存
-            }
-            int temp = array[minIndex];
-            array[minIndex] = array[i];
-            array[i] = temp;
-        }
-        return array;
-    }
-
-
-    private static void maobao(int[] arr) {
-        for (int i = 0; i < arr.length - 1; i++) {
-            for (int j = 0; j < arr.length - 1 - i; j++) {
-                if (arr[j] > arr[j + 1]) {
-                    int temp = arr[j];
-                    arr[j] = arr[j + 1];
-                    arr[j + 1] = temp;
-                }
-            }
-        }
-    }
-
-
-
-
-    private static void printList(int[] list, int st, int end) {
-        for (int i = st; i < list.length; i++) {
-            if (i == end) {
-                break;
-            }
-            System.out.print(list[i] + ",");
-
-        }
-        System.out.println();
-    }
-
-    private static void printList(int[] list) {
-        for (int i1 : list) {
-            System.out.print(i1 + ",");
-        }
-        System.out.println();
-    }
-
-    public static <T> List<T> getPageByList(List<T> resourceList, int pageIndex, int pageSize) {
-        List<T> pageList = new ArrayList<>();
-        if (pageIndex < 1) {
-            pageIndex = 1;
-        }
-        int size = resourceList.size();
-        int pageCount = size / pageSize;
-        int fromIndex = (pageIndex - 1) * pageSize;
-        int toIndex = fromIndex + pageSize;
-        if (toIndex >= size) {
-            toIndex = size;
-        }
-        if (pageIndex > pageCount + 1) {
-            fromIndex = 0;
-            toIndex = 0;
-        }
-        pageList = resourceList.subList(fromIndex, toIndex);
-        return pageList;
-    }
-
     public static ListNode mergeTwoLists(ListNode l1, ListNode l2) {
-        //        ListNode l1 = new ListNode(1,new ListNode(2,new ListNode(4)));
-//        ListNode l2 = new ListNode(3,new ListNode(4,new ListNode(7)));
-//        mergeTwoLists(l1,l2);
-        ListNode next = l1.next;
-        if (next != null) {
-            mergeTwoLists(next, l2);
-        }
-        System.out.println(l1.val);
+        //1 2 4
+        //3 5 7
+//        ListNode l1 = new ListNode(1, new ListNode(2, new ListNode(4)));
+//        ListNode l2 = new ListNode(3, new ListNode(5, new ListNode(7)));
+        int l1v = l1.val; //
+        int l2v = l2.val; //
+
+
         return null;
+    }
+
+    public static String trimSpaces(String IP){//去掉IP字符串前后所有的空格
+        while(IP.startsWith(" ")){
+            IP= IP.substring(1,IP.length()).trim();
+        }
+        while(IP.endsWith(" ")){
+            IP= IP.substring(0,IP.length()-1).trim();
+        }
+        return IP;
+    }
+    public static void main(String[] args) throws Exception {
+        String ip = "  10.0.0.1 ";
+        System.out.println(ip.trim());
     }
 
 
