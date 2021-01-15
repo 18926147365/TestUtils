@@ -10,6 +10,7 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 
 import javafx.concurrent.Task;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -29,18 +30,13 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.sun.management.GarbageCollectorMXBean;
 
 import javax.management.MBeanServer;
-
-/**
- * @author 李浩铭
- * @date 2020/7/3 10:28
- * @descroption
- */
 
 public class Test {
 
@@ -58,22 +54,50 @@ public class Test {
         int l1v = l1.val; //
         int l2v = l2.val; //
 
-
+//        http://10.191.8.120:18802/coupon/json/coupon/directDists--:
+//        {token=[a::6C74DC502264439692CEF7421900A908],
+//            sign=[C77B89F6E29343E6B534179DFFB91937],
+//            jsonData=[{"couList":[{"couTypeCode":"20JFSH000007","validStartDate":1605752093397,"validEndDate":1621304093000,"couNum":3}],"orderType":"200001","activityId":"2455","orderNo":"572614a0-69c0-4cdd-83cb-93c5821d524e","userId":"14969287"}]}
         return null;
     }
 
-    public static String trimSpaces(String IP){//去掉IP字符串前后所有的空格
-        while(IP.startsWith(" ")){
-            IP= IP.substring(1,IP.length()).trim();
+    public static void directDists() {
+
+        String url = "http://10.191.8.120:18802/coupon/json/coupon/directDists";
+//        String url = "http://10.248.250.254:18802/coupon/json/coupon/directDists";
+        String token = "a::A577CA9BB68C4BCEA557D2F8B6101F61";
+        String sign = "";
+        String str = "[{\"couList\":[{\"couTypeCode\":\"20JFSH000007\",\"validStartDate\":1605752093397,\"validEndDate\":1621304093000,\"couNum\":3}],\"orderType\":\"200001\",\"activityId\":\"2455\",\"orderNo\":\"572614a0-69c0-4cdd-83cb-93c5821d524e\",\"userId\":\"14969287\"}]";
+
+        Map<String, String> paramas = new HashMap<>();
+        paramas.put("token", token);
+        paramas.put("sign", sign);
+        paramas.put("jsonData", str);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+        String timestamp = sdf.format(new Date());
+        String secretKey = "";
+        String urlParams = String.format("jsonData=%s&timestamp=%s&secretKey=%s", str, timestamp, secretKey);
+        sign = (urlParams);
+        System.out.println(HttpClientUtil.httpString(url, paramas));
+
+    }
+
+
+    public static String trimSpaces(String IP) {//去掉IP字符串前后所有的空格
+        while (IP.startsWith(" ")) {
+            IP = IP.substring(1, IP.length()).trim();
         }
-        while(IP.endsWith(" ")){
-            IP= IP.substring(0,IP.length()-1).trim();
+        while (IP.endsWith(" ")) {
+            IP = IP.substring(0, IP.length() - 1).trim();
         }
         return IP;
     }
+
+
     public static void main(String[] args) throws Exception {
-        String ip = "  10.0.0.1 ";
-        System.out.println(ip.trim());
+        //0000 0011   0001 1000 16+8=24
+        //0000 1110
+        System.out.println(1<<2 & 0x1);
     }
 
 
