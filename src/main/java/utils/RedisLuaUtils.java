@@ -38,7 +38,6 @@ public class RedisLuaUtils {
         HSETFIELDNX("/lua/hsetFieldnx.lua"),
         GETREDISTIME("/lua/getRedisTime.lua");
 
-
         private final String path;
 
         ScriptLoadEnum(String path) {
@@ -53,9 +52,6 @@ public class RedisLuaUtils {
 
     @Autowired
     private JedisPool jedisPool;
-
-
-
 
     public String lpop(String key){
         Jedis jedis = jedisPool.getResource();

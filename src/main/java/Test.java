@@ -9,8 +9,11 @@ import com.google.common.base.Stopwatch;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 
+import io.netty.util.concurrent.ThreadPerTaskExecutor;
 import javafx.concurrent.Task;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
@@ -18,12 +21,17 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.omg.PortableInterceptor.INACTIVE;
+import system.Singleton;
 import utils.*;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
+import java.net.SocketAddress;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.text.ParseException;
@@ -31,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -92,14 +101,164 @@ public class Test {
         }
         return IP;
     }
-
-
+    static volatile long totalTask = 1000000;
     public static void main(String[] args) throws Exception {
-        //0000 0011   0001 1000 16+8=24
-        //0000 1110
-        System.out.println(1<<2 & 0x1);
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            int rand=(int)(Math.random()*20);
+            list.add(rand);
+        }
+        System.out.println(list.toString());
+        //14, 18, 16, 15, 9, 5, 16, 8, 2, 8
+        //14, 8, 16, 15, 9, 5, 16, 8, 2, 18
+        //14, 8, 2, 15, 9, 5, 16, 8, 16, 18
+        //14, 8, 2, 8, 9, 5,    16, 15, 16, 18
+
+
     }
 
+
+    static class MyTask extends RecursiveTask<Integer> {
+
+        private long taskCount;
+
+        public MyTask(long taskCount) {
+            this.taskCount = taskCount;
+        }
+
+        @Override
+        protected Integer compute() {
+            if (taskCount <= 1000) {
+                try {
+                    Thread.sleep(1223);
+                    synchronized ("!"){
+                        totalTask-=taskCount;
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }else{
+                MyTask myTask = new MyTask(taskCount);
+                invokeAll(myTask);
+            }
+            return 1;
+        }
+    }
+
+    static class DelayQueueItem extends DelayQueue {
+
+        @Override
+        public boolean offer(Object o) {
+
+
+            return false;
+        }
+    }
+
+
+    public static Integer getMonthCnt(Date startTime, Date endTime) {
+        int startYear = startTime.getYear();
+        int endYear = endTime.getYear();
+        int startMonth = startTime.getMonth();
+        int endMonth = endTime.getMonth();
+        int valueYear = endYear - startYear;
+        Integer monthCnt = null;
+        if (valueYear == 0) {
+            monthCnt = (endMonth - startMonth);
+        } else {
+            monthCnt = (valueYear * 12) + endMonth - startMonth;
+        }
+        return monthCnt;
+    }
+
+    public static Integer getDifMonth(Date startDate, Date endDate) {
+        Calendar start = Calendar.getInstance();
+        Calendar end = Calendar.getInstance();
+        start.setTime(startDate);
+        end.setTime(endDate);
+        int result = end.get(Calendar.MONTH) - start.get(Calendar.MONTH);
+        int month = (end.get(Calendar.YEAR) - start.get(Calendar.YEAR)) * 12;
+        return Math.abs(month + result);
+    }
+
+    //1 1
+    //2 11
+    //3 21
+    public static String countAndSay(int n) {
+        if (n == 1) {
+            return "1";
+        }
+        String num = getnumer("1");
+        for (int i = 1; i < n - 1; i++) {
+            num = getnumer(num);
+        }
+        return num;
+    }
+
+    public static String getnumer(String nums) {
+        char[] chars = nums.toCharArray();
+        int j = 1;
+        StringBuilder sbuilder = new StringBuilder();
+        Character lastChar = null;
+        for (int i = 0; i < chars.length; i++) {
+            if (lastChar == null) {
+                lastChar = chars[i];
+            } else {
+                if (lastChar == chars[i]) {
+                    j++;
+                } else {
+                    sbuilder.append(j);
+                    sbuilder.append(lastChar);
+                    j = 1;
+                    lastChar = chars[i];
+                }
+            }
+        }
+        sbuilder.append(j);
+        sbuilder.append(lastChar);
+        return sbuilder.toString();
+    }
+
+    public static int searchInsert(int[] nums, int target) {
+        int base = (int) Math.ceil((double) nums.length / 2);
+        for (int i = 0; i <= base; i++) {
+            if (nums[base - 1] >= target) {
+                if (nums[i] >= target) {
+                    return i;
+                }
+            } else {
+                if (base + i - 1 < nums.length && nums[base + i - 1] >= target) {
+                    return base + i - 1;
+                }
+            }
+        }
+        return nums.length;
+    }
+
+
+    public static int strStr(String haystack, String needle) {
+        if (needle.equals("")) {
+            return 0;
+        }
+        char[] haystacks = haystack.toCharArray();
+        char[] needles = needle.toCharArray();
+        int j = 0;
+        for (int i = 0; i < haystacks.length; i++) {
+            if (haystacks[i] == needles[j]) {
+                j++;
+                if (needles.length == j) {
+                    return i - j + 1;
+                }
+            } else {
+                if (j != 0) {
+                    i -= j;
+
+                }
+                j = 0;
+            }
+        }
+        return -1;
+    }
 
     public static class ListNode {
         int val;

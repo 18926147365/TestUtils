@@ -5,6 +5,7 @@ import bean.UserInfo;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.hash.BloomFilter;
 import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
@@ -340,21 +341,27 @@ public class TestController {
         System.out.println("完成");
     }
 
+    private static Object lock = new Object();
     @RequestMapping("/test34")
     public void test34() throws InterruptedException {
-//        String ware = redisLuaUtils.get("key");
-//        Long wareNum = Long.parseLong(ware);
-//        if (wareNum < 0) {
-//            return;
-//        }
+       Thread thread = new Thread(new Runnable() {
+           @SneakyThrows
+           @Override
+           public void run() {
+               Thread.sleep(1000);
+               System.out.println("123");
+           }
+       });
+       thread.start();
+       thread.join();
+       System.out.println("111");
 
-        long obj = (redisLuaUtils.evalsha(RedisLuaUtils.ScriptLoadEnum.INCRBYGETMAX, Long.class, "key", "900", "1"));
-        if (obj == -1) {
-            System.out.println("没有奖品了");
-        } else {
-            System.out.println(obj);
+    }
+    @RequestMapping("/test344")
+    public void test344() throws InterruptedException {
+        synchronized (lock) {
+            lock.notifyAll();
         }
-
     }
 
 
