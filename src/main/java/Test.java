@@ -1,7 +1,6 @@
 import bean.BinTree;
 import bean.IModel;
 import bean.Shop;
-import bean.User;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -22,7 +21,9 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.omg.PortableInterceptor.INACTIVE;
+import system.People;
 import system.Singleton;
+import system.User;
 import utils.*;
 
 import java.io.*;
@@ -101,22 +102,20 @@ public class Test {
         }
         return IP;
     }
-    static volatile long totalTask = 1000000;
-    public static void main(String[] args) throws Exception {
-        List<Integer> list = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
-            int rand=(int)(Math.random()*20);
-            list.add(rand);
-        }
-        System.out.println(list.toString());
-        //14, 18, 16, 15, 9, 5, 16, 8, 2, 8
-        //14, 8, 16, 15, 9, 5, 16, 8, 2, 18
-        //14, 8, 2, 15, 9, 5, 16, 8, 16, 18
-        //14, 8, 2, 8, 9, 5,    16, 15, 16, 18
 
+    static volatile long totalTask = 1000000;
+
+    public static void main(String[] args) throws Exception {
+        Test test = new Test();
+        test.test();;
 
     }
+    Object str1 = new Object();
+    Object str2 = new Object();
+   static WeakHashMap weakHashMap = new WeakHashMap<>();
+    public void test() throws InterruptedException {
 
+    }
 
     static class MyTask extends RecursiveTask<Integer> {
 
@@ -131,13 +130,13 @@ public class Test {
             if (taskCount <= 1000) {
                 try {
                     Thread.sleep(1223);
-                    synchronized ("!"){
-                        totalTask-=taskCount;
+                    synchronized ("!") {
+                        totalTask -= taskCount;
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            }else{
+            } else {
                 MyTask myTask = new MyTask(taskCount);
                 invokeAll(myTask);
             }

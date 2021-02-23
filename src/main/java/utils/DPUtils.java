@@ -1,6 +1,7 @@
 package utils;
 
 import bean.Shop;
+import mapper.UserMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +14,8 @@ import java.util.List;
 public class DPUtils {
 
     public static void main(String[] args) throws Exception {
+        UserMapper userMapper ;
+
         Shop yx = new Shop();
         yx.setName("音响");//4kg
         yx.setWeight(4);

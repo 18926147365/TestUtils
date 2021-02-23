@@ -36,7 +36,8 @@ public class RedisLuaUtils {
         HSETCACHE("/lua/hsetCache.lua"),
         HGETCACHE("/lua/hgetCache.lua"),
         HSETFIELDNX("/lua/hsetFieldnx.lua"),
-        GETREDISTIME("/lua/getRedisTime.lua");
+        GETREDISTIME("/lua/getRedisTime.lua"),
+        SETBITIFFALSE("/lua/setBitIfFalse.lua");
 
         private final String path;
 
@@ -53,47 +54,58 @@ public class RedisLuaUtils {
     @Autowired
     private JedisPool jedisPool;
 
-    public String lpop(String key){
+
+    /**
+     * 设置bitMap
+     * 若偏移量对应值为0时，则设置为1，此时该方法返回1
+     * 若偏移量对应值为1是，则不做修改，此时方法返回0
+     */
+    public int setBitIfFalse(String key, long offset) {
+        Long evaResult = evalsha(ScriptLoadEnum.SETBITIFFALSE, Long.class, key, String.valueOf(offset));
+        return evaResult.intValue();
+    }
+
+    public String lpop(String key) {
         Jedis jedis = jedisPool.getResource();
         try {
-
             return jedis.lpop(key);
         } finally {
             jedis.close();
         }
     }
 
-    public long lpush(String key,String... value){
+    public long lpush(String key, String... value) {
         Jedis jedis = jedisPool.getResource();
         try {
 
-            return jedis.lpush(key,value);
+            return jedis.lpush(key, value);
         } finally {
             jedis.close();
         }
     }
 
 
-    public boolean setbit(String key,String value){
+    public boolean setbit(String key, long offset, String value) {
         Jedis jedis = jedisPool.getResource();
         try {
-           return jedis.setbit(key,1l,value);
+            return jedis.setbit(key, offset, value);
         } finally {
             jedis.close();
         }
     }
 
 
-    public boolean getbit(String key,String value){
+    public boolean getbit(String key, long offset) {
         Jedis jedis = jedisPool.getResource();
         try {
 
-            return jedis.getbit(key,1l);
+            return jedis.getbit(key, offset);
         } finally {
             jedis.close();
         }
     }
-    public long del(String key){
+
+    public long del(String key) {
         Jedis jedis = jedisPool.getResource();
         try {
             return jedis.del(key);
@@ -101,6 +113,7 @@ public class RedisLuaUtils {
             jedis.close();
         }
     }
+
     private static final Map<ScriptLoadEnum, String> SCRIPTLOADMAP = new ConcurrentHashMap<>();
 
     public String loadScript(ScriptLoadEnum scriptLoadEnum) {
@@ -133,7 +146,7 @@ public class RedisLuaUtils {
 
     public <T extends Comparable> T evalsha(ScriptLoadEnum scriptLoadEnum, Class<T> classz, String... params) {
         if (classz != Long.class && classz != String.class && classz != Boolean.class) {
-            throw new RuntimeException("不支持的类型class:" + classz);
+            throw new RuntimeException("不支持的返回数据类型class:" + classz);
         }
         Object obj = evalsha(scriptLoadEnum, 1, params);
         if (obj == null) {
@@ -164,7 +177,7 @@ public class RedisLuaUtils {
         }
     }
 
-    public void scriptKill(){
+    public void scriptKill() {
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
@@ -193,7 +206,6 @@ public class RedisLuaUtils {
     }
 
 
-
     public Long hset(String key, String field, String val) {
         Jedis jedis = jedisPool.getResource();
         try {
@@ -217,11 +229,12 @@ public class RedisLuaUtils {
     public Long pfadd(String key, String... elements) {
         Jedis jedis = jedisPool.getResource();
         try {
-            return jedis.pfadd(key,elements);
+            return jedis.pfadd(key, elements);
         } finally {
             jedis.close();
         }
     }
+
     public Long pfcount(String key) {
         Jedis jedis = jedisPool.getResource();
         try {
@@ -302,10 +315,10 @@ public class RedisLuaUtils {
                                     Thread.currentThread().getId(),
                                     supplier.getClass().getName(),
                                     watch.getTime(), value);
-                        }catch (Exception e){
+                        } catch (Exception e) {
                             dThread.interrupt();//维护状态的守护线程停止
                             e.printStackTrace();
-                            log.error("hgetCache方法体执行异常thread{}：异常信息:{}",Thread.currentThread().getId(),e);
+                            log.error("hgetCache方法体执行异常thread{}：异常信息:{}", Thread.currentThread().getId(), e);
                         }
 
                     }
@@ -408,7 +421,7 @@ public class RedisLuaUtils {
 
     /**
      *
-     * */
+     */
     public String setnx(String key, String value, long timeout) {
         Jedis jedis = null;
         try {

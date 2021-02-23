@@ -436,46 +436,10 @@ public class TestController {
 
     @RequestMapping("/test37")
     public void test37() {
-        String insertSql = "insert into model (ua,ua_model,status) values(?,?,1)";
-        BloomFilter<String> bloomFilter = BloomFilterUtils.createOrGetString("phoneModel", 1000000, 0.02d);
-        File file = new File("/Users/lihaoming/Desktop/1");
-        BufferedReader reader = null;
-        StringBuffer sbf = new StringBuffer();
-        try {
-            reader = new BufferedReader(new FileReader(file));
-            String ua;
-            while ((ua = reader.readLine()) != null) {
-                String uaModel = getUAModel(ua);
-                if (uaModel == null) {
-                    continue;
-                }
-                if (!bloomFilter.put(uaModel)) {
-                    continue;
-                }
-                String existsSql = "select count(1) from model where ua_model = ?";
-                if ((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel)) > 0) {
-                    continue;
-                }
-                try {
-                    jdbcTemplate.update(insertSql, ua, uaModel);
-                    System.out.println(uaModel);
-                } catch (DataAccessException e) {
-                    System.out.println("异常了");
-                }
-            }
-            System.out.println("完成");
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
-        }
+        String key = "testbit222222";
+//        redisLuaUtils.setbit(key,22,"0");
+        System.out.println(redisLuaUtils.setBitIfFalse(key, 2l));
+        System.out.println(redisLuaUtils.getbit(key,2l));
     }
 
     private String getUAModel(String ua) {
