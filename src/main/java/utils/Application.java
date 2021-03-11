@@ -1,17 +1,23 @@
 package utils;
 
+import bean.Fund;
 import com.sun.management.GarbageCollectorMXBean;
-import com.sun.management.GcInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.ComponentScans;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import service.FundService;
 
 import javax.management.MBeanServer;
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,61 +26,15 @@ import java.util.Map;
  * @descroption
  */
 @SpringBootApplication
-@ComponentScan({"controller", "service","config","utils"})
+@ComponentScan({"controller", "service","config","utils","task"})
 @MapperScan("mapper")
 @Slf4j
-public class Application {
+@EnableScheduling
+public class Application implements ApplicationListener<ContextRefreshedEvent> {
 
     public static void main(String[] args) {
         System.setProperty("java.awt.headless", "false");
         SpringApplication.run(Application.class, args);
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                CopyUtils.listenerCopy();
-            }
-        });
-        thread.setDaemon(true);
-//        thread.start();
-//
-
-
-        Thread thread1 = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true) {
-
-
-                    GcInfo gci = gcMBean.getLastGcInfo();
-                    long duration = gci.getDuration();
-//                    System.out.println("gc花费时间：" + duration + "ms");
-
-                    Map<String, MemoryUsage> memoryUsageBeforeGc = gci.getMemoryUsageBeforeGc();
-                    Map<String, MemoryUsage> memoryUsageAfterGc = gci.getMemoryUsageAfterGc();
-                    memoryUsageBeforeGc.forEach((key, memory) -> {
-
-//                        log.info("{} Before GC:{}", key, memory);
-//                        MemoryUsage afterMemory = memoryUsageAfterGc.get(key);
-//                        log.info("{} After GC:{}", key,afterMemory);
-                    });
-                    try {
-                        Thread.sleep(10000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            }
-        });
-        thread1.setDaemon(true);
-//        thread1.start();
-
-
     }
 
 
@@ -104,4 +64,11 @@ public class Application {
         }
     }
 
+
+    @Override
+    public void onApplicationEvent(ContextRefreshedEvent event) {
+//        FundService fundService = (FundService) event.getApplicationContext().getBean("fundService");
+//        FundUtils.runTask(fundService);
+
+    }
 }

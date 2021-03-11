@@ -1,4 +1,5 @@
 import bean.BinTree;
+import bean.Fund;
 import bean.IModel;
 import bean.Shop;
 import com.alibaba.fastjson.JSON;
@@ -21,6 +22,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.omg.PortableInterceptor.INACTIVE;
+import system.DeloyTask;
 import system.People;
 import system.Singleton;
 import system.User;
@@ -105,14 +107,34 @@ public class Test {
 
     static volatile long totalTask = 1000000;
 
+    private static Queue<User> reStartOrderActivityQueue = new ArrayBlockingQueue<>(10);
+
     public static void main(String[] args) throws Exception {
-        Test test = new Test();
-        test.test();;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String result = (HttpClientUtil.httpGet("http://fundgz.1234567.com.cn/js/001593.js"));
+        String str="jsonpgz({\"fundcode\":\"001593\",\"name\":\"天弘创业板ETF联接基金C\",\"jzrq\":\"2021-03-08\",\"dwjz\":\"1.0643\",\"gsz\":\"1.0289\",\"gszzl\":\"-3.33\",\"gztime\":\"2021-03-09 15:00\"});";
+        String patterStr="(jsonpgz\\()(.*)(\\);)";
+        Matcher matcher = Pattern.compile(patterStr).matcher(result);
+        if(matcher.find()){
+            String json = matcher.group(2);
+            JSONObject fundJson = (JSONObject.parseObject(json));
+            String fundName = fundJson.getString("name");
+            String fundCode = fundJson.getString("fundcode");
+            String gztime = fundJson.getString("gztime");
+            BigDecimal gszzl = fundJson.getBigDecimal("gszzl");
+            Date gzDate = sdf.parse(gztime);
+
+        }
+
+        Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh 休盘 +1.53%");
+
 
     }
+
     Object str1 = new Object();
     Object str2 = new Object();
-   static WeakHashMap weakHashMap = new WeakHashMap<>();
+    static WeakHashMap weakHashMap = new WeakHashMap<>();
+
     public void test() throws InterruptedException {
 
     }

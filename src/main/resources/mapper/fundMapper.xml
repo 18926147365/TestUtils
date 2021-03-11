@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.FundMapper">
+    <resultMap id="BaseResultMap" type="bean.Fund">
+        <result column="id" property="id" ></result>
+        <result column="fund_code" property="fundCode"></result>
+        <result column="fund_name" property="fundName"></result>
+        <result column="state" property="state"></result>
+        <result column="gszzl" property="gszzl"></result>
+        <result column="gztime" property="gztime"></result>
+    </resultMap>
+    <select id="queryById" resultMap="BaseResultMap">
+        select * from fund where id=#{id};
+    </select>
+    <select id="queryAll" resultMap="BaseResultMap">
+        select * from fund where state = 0;
+    </select>
+    <update id="updateFund">
+        update fund set gszzl = #{gszzl}, gztime = #{gztime} where fund_code = #{fundCode}
+    </update>
+</mapper>

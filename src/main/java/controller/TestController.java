@@ -1,5 +1,6 @@
 package controller;
 
+import bean.Fund;
 import bean.User;
 import bean.UserInfo;
 import com.alibaba.fastjson.JSONObject;
@@ -7,6 +8,7 @@ import com.google.common.hash.BloomFilter;
 import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import mapper.FundMapper;
 import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -18,8 +20,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.ContextLoader;
+import org.springframework.web.context.WebApplicationContext;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import service.FundService;
 import service.ModelService;
 import service.TestService;
 import system.LoggerProxy;
@@ -27,11 +32,9 @@ import utils.BloomFilterUtils;
 import utils.CsvUtils;
 import utils.RedisLuaUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.rmi.server.UID;
 import java.util.*;
@@ -52,6 +55,9 @@ public class TestController {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Resource
+    private FundMapper fundMapper;
 
     @Autowired
     private TestService testService;
@@ -460,5 +466,32 @@ public class TestController {
             return "iPhone";
         }
         return null;
+    }
+
+    @RequestMapping("/test377")
+    public void test377() throws IOException {
+       Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh 休盘 +1.53%");
+    }
+    public String convertStreamToStr(InputStream is) throws IOException {
+        if (is != null) {
+            Writer writer = new StringWriter();
+            char[] buffer = new char[1024];
+            try {
+                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                int n;
+                while ((n = reader.read(buffer)) != -1) {
+                    writer.write(buffer, 0, n);
+                }
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                is.close();
+            }
+            return writer.toString();
+        } else {
+            return "";
+        }
     }
 }
