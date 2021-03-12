@@ -11,12 +11,15 @@ import com.google.common.hash.Funnels;
 
 import io.netty.util.concurrent.ThreadPerTaskExecutor;
 import javafx.concurrent.Task;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -30,6 +33,7 @@ import utils.*;
 
 import java.io.*;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.InetSocketAddress;
@@ -49,6 +53,9 @@ import java.util.regex.Pattern;
 import com.sun.management.GarbageCollectorMXBean;
 
 import javax.management.MBeanServer;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 public class Test {
 
@@ -109,26 +116,35 @@ public class Test {
 
     private static Queue<User> reStartOrderActivityQueue = new ArrayBlockingQueue<>(10);
 
-    public static void main(String[] args) throws Exception {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String result = (HttpClientUtil.httpGet("http://fundgz.1234567.com.cn/js/001593.js"));
-        String str="jsonpgz({\"fundcode\":\"001593\",\"name\":\"天弘创业板ETF联接基金C\",\"jzrq\":\"2021-03-08\",\"dwjz\":\"1.0643\",\"gsz\":\"1.0289\",\"gszzl\":\"-3.33\",\"gztime\":\"2021-03-09 15:00\"});";
-        String patterStr="(jsonpgz\\()(.*)(\\);)";
-        Matcher matcher = Pattern.compile(patterStr).matcher(result);
-        if(matcher.find()){
-            String json = matcher.group(2);
-            JSONObject fundJson = (JSONObject.parseObject(json));
-            String fundName = fundJson.getString("name");
-            String fundCode = fundJson.getString("fundcode");
-            String gztime = fundJson.getString("gztime");
-            BigDecimal gszzl = fundJson.getBigDecimal("gszzl");
-            Date gzDate = sdf.parse(gztime);
-
+    private static void calcFund(String fundCode){
+       String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/"+fundCode+".js");
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(result);
+        } catch (ScriptException e) {
+            e.printStackTrace();
         }
+        ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        for (String s : scriptObjectMirror.keySet()) {
+            ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
+            Double datetime = (Double) mirror.get("x");
+            Object obj = mirror.get("equityReturn");
+            Double equityReturn = new Double("0");
+            if(obj instanceof Integer){
+                equityReturn = Double.valueOf( (Integer) mirror.get("equityReturn"));
+            }else if(obj instanceof Double){
+                equityReturn = (Double)obj;
+            }
+            System.out.println(sdf.format(new Date(datetime.longValue())));
+        }
+    }
 
-        Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh 休盘 +1.53%");
+    public static void main(String[] args) {
 
 
+       calcFund("001593");
     }
 
     Object str1 = new Object();

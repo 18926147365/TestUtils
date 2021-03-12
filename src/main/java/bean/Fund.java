@@ -26,6 +26,47 @@ public class Fund {
 
     private BigDecimal gszzl;
 
+    private BigDecimal payAmount;
+
+    private Date calcTime;
+
+    private BigDecimal calcAmount;
+
+    private Date payTime;
+
+
+    public BigDecimal getCalcAmount() {
+        return calcAmount;
+    }
+
+    public void setCalcAmount(BigDecimal calcAmount) {
+        this.calcAmount = calcAmount;
+    }
+
+    public Date getPayTime() {
+        return payTime;
+    }
+
+    public void setPayTime(Date payTime) {
+        this.payTime = payTime;
+    }
+
+    public BigDecimal getPayAmount() {
+        return payAmount;
+    }
+
+    public void setPayAmount(BigDecimal payAmount) {
+        this.payAmount = payAmount;
+    }
+
+    public Date getCalcTime() {
+        return calcTime;
+    }
+
+    public void setCalcTime(Date calcTime) {
+        this.calcTime = calcTime;
+    }
+
     public Integer getState() {
         return state;
     }

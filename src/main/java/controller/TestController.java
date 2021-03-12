@@ -6,6 +6,7 @@ import bean.UserInfo;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.hash.BloomFilter;
 import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import mapper.FundMapper;
@@ -30,13 +31,18 @@ import service.TestService;
 import system.LoggerProxy;
 import utils.BloomFilterUtils;
 import utils.CsvUtils;
+import utils.HttpClientUtil;
 import utils.RedisLuaUtils;
 
 import javax.annotation.Resource;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.math.BigDecimal;
 import java.rmi.server.UID;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
@@ -348,21 +354,23 @@ public class TestController {
     }
 
     private static Object lock = new Object();
+
     @RequestMapping("/test34")
     public void test34() throws InterruptedException {
-       Thread thread = new Thread(new Runnable() {
-           @SneakyThrows
-           @Override
-           public void run() {
-               Thread.sleep(1000);
-               System.out.println("123");
-           }
-       });
-       thread.start();
-       thread.join();
-       System.out.println("111");
+        Thread thread = new Thread(new Runnable() {
+            @SneakyThrows
+            @Override
+            public void run() {
+                Thread.sleep(1000);
+                System.out.println("123");
+            }
+        });
+        thread.start();
+        thread.join();
+        System.out.println("111");
 
     }
+
     @RequestMapping("/test344")
     public void test344() throws InterruptedException {
         synchronized (lock) {
@@ -445,7 +453,7 @@ public class TestController {
         String key = "testbit222222";
 //        redisLuaUtils.setbit(key,22,"0");
         System.out.println(redisLuaUtils.setBitIfFalse(key, 2l));
-        System.out.println(redisLuaUtils.getbit(key,2l));
+        System.out.println(redisLuaUtils.getbit(key, 2l));
     }
 
     private String getUAModel(String ua) {
@@ -470,28 +478,46 @@ public class TestController {
 
     @RequestMapping("/test377")
     public void test377() throws IOException {
-       Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh 休盘 +1.53%");
+        List<Fund> fundList = fundMapper.queryAll();
+        for (Fund fund : fundList) {
+            Date date = fund.getCalcTime();
+            calcFund(fund);
+        }
     }
-    public String convertStreamToStr(InputStream is) throws IOException {
-        if (is != null) {
-            Writer writer = new StringWriter();
-            char[] buffer = new char[1024];
-            try {
-                Reader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-                int n;
-                while ((n = reader.read(buffer)) != -1) {
-                    writer.write(buffer, 0, n);
-                }
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                is.close();
+    private  void calcFund(Fund fund) {
+        String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(result);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+        ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        BigDecimal calcTemp = new BigDecimal("0");
+        double total = fund.getCalcAmount().doubleValue();
+        Date lastDate = null;
+        for (String s : scriptObjectMirror.keySet()) {
+            ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
+            Double datetime = (Double) mirror.get("x");
+            Object obj = mirror.get("equityReturn");
+            Double equityReturn = new Double("0");
+            if (obj instanceof Integer) {
+                equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
+            } else if (obj instanceof Double) {
+                equityReturn = (Double) obj;
             }
-            return writer.toString();
-        } else {
-            return "";
+            if (datetime.longValue() > fund.getCalcTime().getTime()) {
+                calcTemp = calcTemp.add(BigDecimal.valueOf(equityReturn));
+                String after = total+"";
+                total =total+ total*(equityReturn.doubleValue()/100);
+                lastDate = new Date(datetime.longValue());
+                log.info(sdf.format(new Date(datetime.longValue()))+"  "+equityReturn + " 原有金额:"+after+" 变更后:"+total);
+            }
+        }
+        if(lastDate!=null){
+            fundMapper.updateCalcFund(fund.getFundCode(),new BigDecimal(total),lastDate);
         }
     }
 }

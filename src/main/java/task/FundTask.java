@@ -2,7 +2,9 @@ package task;
 
 import bean.Fund;
 import com.alibaba.fastjson.JSONObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
+import mapper.FundMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -11,6 +13,9 @@ import org.springframework.stereotype.Component;
 import service.FundService;
 import utils.HttpClientUtil;
 
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
@@ -36,7 +41,10 @@ public class FundTask {
     @Autowired
     private FundService fundService;
 
-    @Scheduled(cron="0 31 11 * * ?")
+    @Autowired
+    private FundMapper fundMapper;
+
+    @Scheduled(cron="0 32 11 * * ?")
     public void runTask1(){
         try {
             execute("休盘");
@@ -44,7 +52,7 @@ public class FundTask {
             e.printStackTrace();
         }
     }
-    @Scheduled(cron="0 01 15 * * ?")
+    @Scheduled(cron="0 32 15 * * ?")
     public void runTask2(){
         try {
             execute("收盘");
@@ -62,7 +70,7 @@ public class FundTask {
         int upFundTotal = 0;
         int downFundTotal = 0;
         int fundTotal = 0;
-
+        double totalCalcMoney = 0d;
         Date now = new Date();
         for (Fund fund : fundList) {
             String fundCode = fund.getFundCode();
@@ -87,15 +95,55 @@ public class FundTask {
                     break;
                 }
                 Date gzDate = sdf.parse(gztime);
+                double calcAmount = calcFund(fund);
+                totalCalcMoney = totalCalcMoney +(calcAmount * gszzl.doubleValue()/100);
                 fundService.updateFund(fundCode, gszzl, gzDate);
                 tipBuilder.append("[" + gszzl + "%]");
             }
         }
         if(fundTotal>0){
-            String downUpTip = "涨:" + upFundTotal + "支&&跌:" + downFundTotal + "支";
+            String downUpTip = "涨:" + upFundTotal + "支,跌:" + downFundTotal + "支,共收益:"+(int)(totalCalcMoney)+"元";
             Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh "+title+" " + tipBuilder + " " + downUpTip);
         }
 
 
+    }
+
+    private  double calcFund(Fund fund) {
+        String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(result);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+        ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        BigDecimal calcTemp = new BigDecimal("0");
+        double total = fund.getCalcAmount().doubleValue();
+        Date lastDate = null;
+        for (String s : scriptObjectMirror.keySet()) {
+            ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
+            Double datetime = (Double) mirror.get("x");
+            Object obj = mirror.get("equityReturn");
+            Double equityReturn = new Double("0");
+            if (obj instanceof Integer) {
+                equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
+            } else if (obj instanceof Double) {
+                equityReturn = (Double) obj;
+            }
+            if (datetime.longValue() > fund.getCalcTime().getTime()) {
+                calcTemp = calcTemp.add(BigDecimal.valueOf(equityReturn));
+                String after = total+"";
+                total =total+ total*(equityReturn.doubleValue()/100);
+                lastDate = new Date(datetime.longValue());
+                log.info(sdf.format(new Date(datetime.longValue()))+"  "+equityReturn + " 原有金额:"+after+" 变更后:"+total);
+            }
+        }
+        if(lastDate!=null){
+            fundMapper.updateCalcFund(fund.getFundCode(),new BigDecimal(total),lastDate);
+        }
+        return total;
     }
 }

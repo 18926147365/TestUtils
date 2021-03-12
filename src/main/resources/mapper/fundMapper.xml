@@ -7,6 +7,10 @@
         <result column="fund_code" property="fundCode"></result>
         <result column="fund_name" property="fundName"></result>
         <result column="state" property="state"></result>
+        <result column="pay_amount" property="payAmount"></result>
+        <result column="pay_time" property="payTime"></result>
+        <result column="calc_amount" property="calcAmount"></result>
+        <result column="calc_time" property="calcTime"></result>
         <result column="gszzl" property="gszzl"></result>
         <result column="gztime" property="gztime"></result>
     </resultMap>
@@ -18,5 +22,8 @@
     </select>
     <update id="updateFund">
         update fund set gszzl = #{gszzl}, gztime = #{gztime} where fund_code = #{fundCode}
+    </update>
+    <update id="updateCalcFund">
+        update fund set calc_time=#{calcTime},calc_amount=#{calcAmount} where fund_code = #{fundCode}
     </update>
 </mapper>
