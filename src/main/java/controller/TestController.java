@@ -481,15 +481,7 @@ public class TestController {
 
     @RequestMapping("/test377")
     public void test377() throws Exception {
-        Set<String> set = NettyServerHandler.contextMap.keySet();
-        for (String s : set) {
-            ChannelHandlerContext ctx = NettyServerHandler.contextMap.get(s);
-            ByteBuf newbuf = ctx.alloc().buffer(1024);
-            byte[] resp = "服务器fffffffffffffffffffffff".getBytes();
-            newbuf.writeBytes(resp);
-            ctx.writeAndFlush(newbuf);
-        }
-//        fundTask.execute("123");
+        fundTask.execute("123");
     }
 
 

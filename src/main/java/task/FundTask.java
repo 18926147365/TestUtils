@@ -3,6 +3,8 @@ package task;
 import bean.Fund;
 import bean.NettyMsg;
 import com.alibaba.fastjson.JSONObject;
+import dingtalk.DingTalkSend;
+import dingtalk.DingText;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -52,7 +54,7 @@ public class FundTask {
     private FundMapper fundMapper;
 
 
-//    @Scheduled(cron = "0 32 11 * * ?")
+    @Scheduled(cron = "0 32 11 * * ?")
     public void runTask1() {
         try {
             execute("休盘");
@@ -61,7 +63,7 @@ public class FundTask {
         }
     }
 
-//    @Scheduled(cron = "0 03 15 * * ?")
+    @Scheduled(cron = "0 03 15 * * ?")
     public void runTask2() {
         try {
             execute("收盘");
@@ -95,14 +97,7 @@ public class FundTask {
                 String fundName = fundJson.getString("name");
                 String gztime = fundJson.getString("gztime") + ":00";
                 BigDecimal gszzl = fundJson.getBigDecimal("gszzl");
-                if(!existsFundSet.contains(fundCode)){
-                    tipBuilder.append("[" + gszzl + "%]");
-                    if (gszzl.doubleValue() > 0) {
-                        upFundTotal++;
-                    } else {
-                        downFundTotal++;
-                    }
-                }
+
 
                 if (daySdf.parse(gztime).getTime() == daySdf.parse(daySdf.format(now)).getTime()) {
                     fundTotal++;
@@ -111,35 +106,32 @@ public class FundTask {
                 }
                 Date gzDate = sdf.parse(gztime);
                 double calcAmount = calcFund(fund);
-                totalCalcMoney = totalCalcMoney + (calcAmount * gszzl.doubleValue() / 100);
+                double calcValue = (calcAmount * gszzl.doubleValue() / 100);
+                if (!existsFundSet.contains(fundCode)) {
+                    tipBuilder.append("[" + gszzl + "%]");
+                    tipBuilder.append(fundName);
+                    tipBuilder.append("\n");
+                    if (gszzl.doubleValue() > 0) {
+                        upFundTotal++;
+                    } else {
+                        downFundTotal++;
+                    }
+                }
+                totalCalcMoney = totalCalcMoney + calcValue;
+
                 fundService.updateFund(fund.getId(), gszzl, gzDate);
                 existsFundSet.add(fundCode);
             }
         }
         if (fundTotal > 0) {
-            Set<String> set = NettyServerHandler.contextMap.keySet();
-            for (String s : set) {
-                ChannelHandlerContext ctx = NettyServerHandler.contextMap.get(s);
-                ByteBuf newbuf = ctx.alloc().buffer(1024);
-                String downUpTip = "涨:" + upFundTotal + "支,跌:" + downFundTotal + "支,共收益:"+(int)(totalCalcMoney)+"元";
-                JSONObject msgJSON = new JSONObject();
-                msgJSON.put("title",title);
-                msgJSON.put("title1",tipBuilder);
-                msgJSON.put("title2",downUpTip);
-                NettyMsg nettyMsg = new NettyMsg();
-                nettyMsg.setMsgType(NettyMsg.NOTIFY);
-                nettyMsg.setCode(0);
-                nettyMsg.setMsg(msgJSON.toString());
-                String message = JSONObject.toJSONString(nettyMsg);
-                try {
-                    message = RSAUtils.encryptByPublicKey(message,RSAUtils.publicKey);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                byte[] resp = message.getBytes();
-                newbuf.writeBytes(resp);
-                ctx.writeAndFlush(newbuf);
-            }
+            String dateDay = daySdf.format(new Date());
+            String content = title+"%s\n涨:%s支 跌:%s支\n收益:%s元\n";
+            content = String.format(content, dateDay, upFundTotal, downFundTotal, (int) totalCalcMoney);
+            content+=tipBuilder.toString();
+            DingText dingText = new DingText(content);
+            DingTalkSend dingTalkSend = new DingTalkSend(dingText);
+            dingTalkSend.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
+            dingTalkSend.send();
         }
     }
 
