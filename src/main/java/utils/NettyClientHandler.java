@@ -4,10 +4,9 @@ import bean.NettyMsg;
 import com.alibaba.fastjson.JSONObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerAdapter;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 
 /**
  * @Description:
@@ -15,12 +14,22 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
  * @Date: 2020/10/13 3:04 下午
  */
 public class NettyClientHandler extends ChannelInboundHandlerAdapter implements ChannelHandler {
-
     public NettyClientHandler() {
 
 
     }
-
+    //当服务器5秒内没有发生读的事件时，会触发这个事件
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent) {
+            IdleState state = ((IdleStateEvent) evt).state();
+            if (state == IdleState.READER_IDLE) { //当事件为读事件触发时发生异常，或者中断
+                throw new Exception("idle exception");//将通道进行关闭
+            }
+        }else {
+            super.userEventTriggered(ctx, evt);
+        }
+    }
 
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         //与服务端建立连接后
@@ -61,4 +70,6 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter implements 
 
         ctx.close();
     }
+
+
 }

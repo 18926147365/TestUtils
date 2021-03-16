@@ -61,7 +61,7 @@ public class FundTask {
         }
     }
 
-//    @Scheduled(cron = "0 32 15 * * ?")
+//    @Scheduled(cron = "0 03 15 * * ?")
     public void runTask2() {
         try {
             execute("收盘");
