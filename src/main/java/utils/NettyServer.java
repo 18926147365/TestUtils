@@ -36,7 +36,5 @@ public class NettyServer {
             boss.shutdownGracefully();
             worker.shutdownGracefully();
         }
-
-
     }
 }

@@ -18,7 +18,7 @@ public interface FundMapper {
 
     Fund queryById(@Param(value = "id") Integer id);
 
-    void updateFund(@Param(value = "fundCode") String fundCode, @Param(value = "gszzl") BigDecimal gszzl, @Param(value = "gztime") Date gztime);
+    void updateFund(@Param(value = "id") Integer id, @Param(value = "gszzl") BigDecimal gszzl, @Param(value = "gztime") Date gztime);
 
-    void updateCalcFund(@Param(value = "fundCode") String fundCode, @Param(value = "calcAmount") BigDecimal calcAmount, @Param(value = "calcTime") Date calcTime);
+    void updateCalcFund(@Param(value = "id") Integer id, @Param(value = "calcAmount") BigDecimal calcAmount, @Param(value = "calcTime") Date calcTime);
 }

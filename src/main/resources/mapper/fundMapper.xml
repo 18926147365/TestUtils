@@ -21,9 +21,9 @@
         select * from fund where state = 0;
     </select>
     <update id="updateFund">
-        update fund set gszzl = #{gszzl}, gztime = #{gztime} where fund_code = #{fundCode}
+        update fund set gszzl = #{gszzl}, gztime = #{gztime} where id = #{id}
     </update>
     <update id="updateCalcFund">
-        update fund set calc_time=#{calcTime},calc_amount=#{calcAmount} where fund_code = #{fundCode}
+        update fund set calc_time=#{calcTime},calc_amount=#{calcAmount} where id = #{id}
     </update>
 </mapper>

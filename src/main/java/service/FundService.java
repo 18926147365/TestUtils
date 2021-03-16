@@ -27,8 +27,8 @@ public class FundService {
         return fundMapper.queryAll();
     }
 
-    public void updateFund( String fundCode,BigDecimal gszzl, Date gztime){
-        fundMapper.updateFund(fundCode, gszzl, gztime);
+    public void updateFund( Integer id,BigDecimal gszzl, Date gztime){
+        fundMapper.updateFund(id, gszzl, gztime);
     }
 
 }

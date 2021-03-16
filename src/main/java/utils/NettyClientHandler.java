@@ -1,5 +1,7 @@
 package utils;
 
+import bean.NettyMsg;
+import com.alibaba.fastjson.JSONObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
@@ -31,12 +33,24 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter implements 
 
     public void channelRead(ChannelHandlerContext ctx, Object msg)
             throws Exception {
-        System.out.println("client channelRead..");
         //服务端返回消息后
         ByteBuf buf = (ByteBuf) msg;
         byte[] req = new byte[buf.readableBytes()];
         buf.readBytes(req);
         String body = new String(req, "UTF-8");
+        //解密
+        String msgSign = RSAUtils.decryptByPrivateKey(body,RSAUtils.privateKey);
+        NettyMsg nettyMsg = JSONObject.parseObject(msgSign,NettyMsg.class);
+        if(nettyMsg.getMsgType().equals(NettyMsg.NOTIFY)){
+            JSONObject msgJson = JSONObject.parseObject(nettyMsg.getMsg());
+            String title = msgJson.getString("title");
+            String title1 = msgJson.getString("title1");
+            String title2 = msgJson.getString("title2");
+            Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh "+title+" " + title1 + " " + title2);
+//            Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/notify.sh "+title+" " + tipBuilder + " " + downUpTip);
+        }
+
+
         System.out.println("Now is :" + body);
     }
 

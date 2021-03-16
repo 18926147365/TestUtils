@@ -6,6 +6,8 @@ import bean.UserInfo;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.hash.BloomFilter;
 import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +31,8 @@ import service.FundService;
 import service.ModelService;
 import service.TestService;
 import system.LoggerProxy;
-import utils.BloomFilterUtils;
-import utils.CsvUtils;
-import utils.HttpClientUtil;
-import utils.RedisLuaUtils;
+import task.FundTask;
+import utils.*;
 
 import javax.annotation.Resource;
 import javax.script.ScriptEngine;
@@ -476,48 +476,21 @@ public class TestController {
         return null;
     }
 
+    @Autowired
+    private FundTask fundTask;
+
     @RequestMapping("/test377")
-    public void test377() throws IOException {
-        List<Fund> fundList = fundMapper.queryAll();
-        for (Fund fund : fundList) {
-            Date date = fund.getCalcTime();
-            calcFund(fund);
+    public void test377() throws Exception {
+        Set<String> set = NettyServerHandler.contextMap.keySet();
+        for (String s : set) {
+            ChannelHandlerContext ctx = NettyServerHandler.contextMap.get(s);
+            ByteBuf newbuf = ctx.alloc().buffer(1024);
+            byte[] resp = "服务器fffffffffffffffffffffff".getBytes();
+            newbuf.writeBytes(resp);
+            ctx.writeAndFlush(newbuf);
         }
+//        fundTask.execute("123");
     }
-    private  void calcFund(Fund fund) {
-        String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("js");
-        try {
-            engine.eval(result);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
-        ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        BigDecimal calcTemp = new BigDecimal("0");
-        double total = fund.getCalcAmount().doubleValue();
-        Date lastDate = null;
-        for (String s : scriptObjectMirror.keySet()) {
-            ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
-            Double datetime = (Double) mirror.get("x");
-            Object obj = mirror.get("equityReturn");
-            Double equityReturn = new Double("0");
-            if (obj instanceof Integer) {
-                equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
-            } else if (obj instanceof Double) {
-                equityReturn = (Double) obj;
-            }
-            if (datetime.longValue() > fund.getCalcTime().getTime()) {
-                calcTemp = calcTemp.add(BigDecimal.valueOf(equityReturn));
-                String after = total+"";
-                total =total+ total*(equityReturn.doubleValue()/100);
-                lastDate = new Date(datetime.longValue());
-                log.info(sdf.format(new Date(datetime.longValue()))+"  "+equityReturn + " 原有金额:"+after+" 变更后:"+total);
-            }
-        }
-        if(lastDate!=null){
-            fundMapper.updateCalcFund(fund.getFundCode(),new BigDecimal(total),lastDate);
-        }
-    }
+
+
 }
