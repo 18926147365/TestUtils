@@ -14,7 +14,7 @@ import java.util.List;
 public class DPUtils {
 
     public static void main(String[] args) throws Exception {
-        UserMapper userMapper ;
+        UserMapper userMapper;
 
         Shop yx = new Shop();
         yx.setName("音响");//4kg
@@ -53,35 +53,35 @@ public class DPUtils {
         for (int j = 0; j < list.size(); j++) {
             Shop indexShop = list.get(j);
             for (int i = 0; i < maxWeight; i++) {
-                if(j==0){
-                    if(indexShop.getWeight()<=(i+1)){
-                        shops[j][i]=toShop(indexShop);
+                if (j == 0) {
+                    if (indexShop.getWeight() <= (i + 1)) {
+                        shops[j][i] = toShop(indexShop);
                     }
-                }else{
-                    Shop lastShop = shops[j-1][i];
-                    if(indexShop.getWeight()<=(i+1)){
-                        if(lastShop == null){
-                            shops[j][i]=toShop(indexShop);
-                        }else{
+                } else {
+                    Shop lastShop = shops[j - 1][i];
+                    if (indexShop.getWeight() <= (i + 1)) {
+                        if (lastShop == null) {
+                            shops[j][i] = toShop(indexShop);
+                        } else {
                             Shop tempShop = null;
-                            if(i>=indexShop.getWeight()){
-                                tempShop=shops[j-1][i-indexShop.getWeight()];
+                            if (i >= indexShop.getWeight()) {
+                                tempShop = shops[j - 1][i - indexShop.getWeight()];
                             }
-                            if(tempShop == null ){
-                                if(indexShop.getMoney() > lastShop.getMoney()){
-                                    shops[j][i]=toShop(indexShop);
-                                }else{
-                                    shops[j][i]=toShop(lastShop);
+                            if (tempShop == null) {
+                                if (indexShop.getMoney() > lastShop.getMoney()) {
+                                    shops[j][i] = toShop(indexShop);
+                                } else {
+                                    shops[j][i] = toShop(lastShop);
                                 }
-                            }else{
-                                if(indexShop.getMoney() + tempShop.getMoney()> lastShop.getMoney()){
-                                    shops[j][i] = mergeShop(indexShop,tempShop);
-                                }else{
-                                    shops[j][i]=toShop(lastShop);
+                            } else {
+                                if (indexShop.getMoney() + tempShop.getMoney() > lastShop.getMoney()) {
+                                    shops[j][i] = mergeShop(indexShop, tempShop);
+                                } else {
+                                    shops[j][i] = toShop(lastShop);
                                 }
                             }
                         }
-                    }else{
+                    } else {
                         shops[j][i] = toShop(lastShop);
                     }
                 }
@@ -108,7 +108,8 @@ public class DPUtils {
         System.out.println("吉他  吉他 笔记本 笔记本,吉他");
     }
 
-    static int total =0;
+    static int total = 0;
+
     private static Shop mergeShop(Shop shop1, Shop shop2) {
         total++;
         Shop newShop = new Shop();
@@ -121,7 +122,7 @@ public class DPUtils {
     private static Shop toShop(Shop shop) {
         total++;
 
-        if(shop==null){
+        if (shop == null) {
 //            System.out.print("null ");
             return null;
         }

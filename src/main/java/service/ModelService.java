@@ -36,7 +36,7 @@ public class ModelService {
     private static String REGEX_CHINESE = "[\u4e00-\u9fa5]";// 中文正则
 
 
-    public static Map<String,List<String>> dictMap=new HashMap<>();
+    public static Map<String, List<String>> dictMap = new HashMap<>();
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -44,123 +44,126 @@ public class ModelService {
     @Autowired
     private RedisLuaUtils redisLuaUtils;
 
-    public String getBrand(String ua){
-        String uaModel=getUAModel(ua);
-        if(StringUtils.isNotBlank(uaModel)){
-            if("iphone".equalsIgnoreCase(uaModel)){
+    public String getBrand(String ua) {
+        String uaModel = getUAModel(ua);
+        if (StringUtils.isNotBlank(uaModel)) {
+            if ("iphone".equalsIgnoreCase(uaModel)) {
                 return "iPhone";
             }
-            String key="model:uaModel:"+uaModel;
-            String redisVal=redisLuaUtils.get(key);
+            String key = "model:uaModel:" + uaModel;
+            String redisVal = redisLuaUtils.get(key);
             if (StringUtils.isNotBlank(redisVal)) {
                 return redisVal;
             }
-            String sql="SELECT * FROM `model` WHERE  status=0 and ua_model=? limit 0,1";
-            List<Map<String,Object>> list=jdbcTemplate.queryForList(sql,uaModel);
-            if(list!=null && list.size()!=0){
-                String brand=list.get(0).get("brand")+"";
-                redisLuaUtils.set(key,brand,24*60*60);
+            String sql = "SELECT * FROM `model` WHERE  status=0 and ua_model=? limit 0,1";
+            List<Map<String, Object>> list = jdbcTemplate.queryForList(sql, uaModel);
+            if (list != null && list.size() != 0) {
+                String brand = list.get(0).get("brand") + "";
+                redisLuaUtils.set(key, brand, 24 * 60 * 60);
                 return brand;
             }
             reModel(ua);
         }
         return "unknown";
     }
+
     static ExecutorService pool = new ThreadPoolExecutor(2, 3, 6000,
             TimeUnit.MILLISECONDS,
             new ArrayBlockingQueue<>(5000),
             Executors.defaultThreadFactory(),
             new ThreadPoolExecutor.AbortPolicy());
+
     static {
         ((ThreadPoolExecutor) pool).allowCoreThreadTimeOut(true);
     }
-    public void reFix(){
-        String sql="SELECT * FROM `model` WHERE  (STATUS=2  and sp_data='[]') or status=1";
-        String updateSql="update model set status=?,brand=?,sp_data=?,brands=?,model=? where id=?";
-        List<Map<String,Object>> list=jdbcTemplate.queryForList(sql);
+
+    public void reFix() {
+        String sql = "SELECT * FROM `model` WHERE  (STATUS=2  and sp_data='[]') or status=1";
+        String updateSql = "update model set status=?,brand=?,sp_data=?,brands=?,model=? where id=?";
+        List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
         //设置空闲回收线程
 
         for (Map<String, Object> map : list) {
             pool.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String ua=map.get("ua")+"";
-                    Long id= (Long) map.get("id");
-                    String uaModel=getUAModel(ua);
-                    int rand=(int)(Math.random()*4000)+1032;
+                    String ua = map.get("ua") + "";
+                    Long id = (Long) map.get("id");
+                    String uaModel = getUAModel(ua);
+                    int rand = (int) (Math.random() * 4000) + 1032;
                     try {
                         Thread.sleep(rand);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    List<String> dataList=getContentList(ua);
-                    IModel iModel=(getIModel(dataList, uaModel));
-                    if(iModel!=null){
-                        log.info("解析成功:{} 品牌：{}",uaModel,iModel.getBrand());
-                        jdbcTemplate.update(updateSql,iModel.getStatus(),iModel.getBrand(),JSONArray.toJSONString(dataList),JSONArray.toJSONString(iModel.getBrands()),iModel.getModel(),id);
+                    List<String> dataList = getContentList(ua);
+                    IModel iModel = (getIModel(dataList, uaModel));
+                    if (iModel != null) {
+                        log.info("解析成功:{} 品牌：{}", uaModel, iModel.getBrand());
+                        jdbcTemplate.update(updateSql, iModel.getStatus(), iModel.getBrand(), JSONArray.toJSONString(dataList), JSONArray.toJSONString(iModel.getBrands()), iModel.getModel(), id);
                     }
                 }
             });
 
         }
 
-        String sql1="SELECT * FROM `model` WHERE STATUS=2 AND sp_data!='[]' AND sp_data IS NOT NULL";
-        List<Map<String,Object>> list1=jdbcTemplate.queryForList(sql1);
+        String sql1 = "SELECT * FROM `model` WHERE STATUS=2 AND sp_data!='[]' AND sp_data IS NOT NULL";
+        List<Map<String, Object>> list1 = jdbcTemplate.queryForList(sql1);
         for (Map<String, Object> map : list1) {
-            String ua=map.get("ua")+"";
-            Long id= (Long) map.get("id");
-            String uaModel=getUAModel(ua);
-            List<String> dataList=getContentList(ua);
-            IModel iModel=(getIModel(dataList, uaModel));
-            if(iModel!=null){
-                log.info("解析成功:{} 品牌：{}",uaModel,iModel.getBrand());
-                jdbcTemplate.update(updateSql,iModel.getStatus(),iModel.getBrand(),JSONArray.toJSONString(dataList),JSONArray.toJSONString(iModel.getBrands()),iModel.getModel(),id);
+            String ua = map.get("ua") + "";
+            Long id = (Long) map.get("id");
+            String uaModel = getUAModel(ua);
+            List<String> dataList = getContentList(ua);
+            IModel iModel = (getIModel(dataList, uaModel));
+            if (iModel != null) {
+                log.info("解析成功:{} 品牌：{}", uaModel, iModel.getBrand());
+                jdbcTemplate.update(updateSql, iModel.getStatus(), iModel.getBrand(), JSONArray.toJSONString(dataList), JSONArray.toJSONString(iModel.getBrands()), iModel.getModel(), id);
             }
         }
 
     }
 
-    private List<String> getContentList(String ua){
-        String uaModel=getUAModel(ua);
-        if(StringUtils.isBlank(uaModel)){
+    private List<String> getContentList(String ua) {
+        String uaModel = getUAModel(ua);
+        if (StringUtils.isBlank(uaModel)) {
             return new ArrayList<>();
         }
-        if("iPhone".equals(uaModel)){
+        if ("iPhone".equals(uaModel)) {
             return new ArrayList<>();
         }
 //        List<String> dataList= romzhijiaSp(uaModel);
 //        if(dataList==null ||dataList.size()==0){
-        List<String> dataList=baiduSp(uaModel);
+        List<String> dataList = baiduSp(uaModel);
 //        }
         return dataList;
 
     }
 
 
-    public void reModel(String ua){
-        String uaModel=getUAModel(ua);
-        if(uaModel==null){
+    public void reModel(String ua) {
+        String uaModel = getUAModel(ua);
+        if (uaModel == null) {
             return;
         }
-        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString("phoneModel",1000000,0.02d);
+        BloomFilter<String> bloomFilter = BloomFilterUtils.createOrGetString("phoneModel", 1000000, 0.02d);
         if (!bloomFilter.put(uaModel)) {
             return;
         }
-        String existsSql="select count(1) from model where ua_model = ?";
-        if((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel))>0){
+        String existsSql = "select count(1) from model where ua_model = ?";
+        if ((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel)) > 0) {
             return;
         }
-        
-        List<String> dataList=getContentList(ua);
-        String insertSql="INSERT INTO model (`status`,ua,ua_model,sp_data,brand,brands,model) VALUES(?,?,?,?,?,?,?);";
-        IModel iModel=(getIModel(dataList, uaModel));
-        if(iModel!=null){
-            int status=iModel.getStatus();
-            if(dataList.size()==0){
-                status=1;
+
+        List<String> dataList = getContentList(ua);
+        String insertSql = "INSERT INTO model (`status`,ua,ua_model,sp_data,brand,brands,model) VALUES(?,?,?,?,?,?,?);";
+        IModel iModel = (getIModel(dataList, uaModel));
+        if (iModel != null) {
+            int status = iModel.getStatus();
+            if (dataList.size() == 0) {
+                status = 1;
             }
-            log.info("解析成功:{} 品牌：{}",uaModel,iModel.getBrand());
-            jdbcTemplate.update(insertSql,status,ua,uaModel,JSONArray.toJSONString(dataList),iModel.getBrand(),JSONArray.toJSONString(iModel.getBrands()),iModel.getModel());
+            log.info("解析成功:{} 品牌：{}", uaModel, iModel.getBrand());
+            jdbcTemplate.update(insertSql, status, ua, uaModel, JSONArray.toJSONString(dataList), iModel.getBrand(), JSONArray.toJSONString(iModel.getBrands()), iModel.getModel());
         }
     }
 
@@ -170,31 +173,30 @@ public class ModelService {
             Executors.defaultThreadFactory(),
             new ThreadPoolExecutor.AbortPolicy());
 
-    public void reModelAsync(String ua){
-        String uaModel=getUAModel(ua);
-        if(uaModel==null){
+    public void reModelAsync(String ua) {
+        String uaModel = getUAModel(ua);
+        if (uaModel == null) {
             return;
         }
-        BloomFilter<String> bloomFilter=BloomFilterUtils.createOrGetString("phoneModel",1000000,0.02d);
+        BloomFilter<String> bloomFilter = BloomFilterUtils.createOrGetString("phoneModel", 1000000, 0.02d);
         if (!bloomFilter.put(uaModel)) {
             return;
         }
-        String existsSql="select count(1) from model where ua_model = ?";
-        if((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel))>0){
+        String existsSql = "select count(1) from model where ua_model = ?";
+        if ((jdbcTemplate.queryForObject(existsSql, Long.class, uaModel)) > 0) {
             return;
         }
-        String insertSql="INSERT INTO model (`status`,ua,ua_model) VALUES(?,?,?);";
-        jdbcTemplate.update(insertSql,1,ua,uaModel);
-
+        String insertSql = "INSERT INTO model (`status`,ua,ua_model) VALUES(?,?,?);";
+        jdbcTemplate.update(insertSql, 1, ua, uaModel);
 
 
     }
 
 
-    private List<String> romzhijiaSp(String uaModel){
-        String  url = null;
+    private List<String> romzhijiaSp(String uaModel) {
+        String url = null;
         try {
-            url="http://so.romzhijia.net/cse/search?s=12725138872909822094&q="+URLEncoder.encode(uaModel,"UTF-8");
+            url = "http://so.romzhijia.net/cse/search?s=12725138872909822094&q=" + URLEncoder.encode(uaModel, "UTF-8");
             return httpClientSp(url);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -202,29 +204,29 @@ public class ModelService {
         return null;
     }
 
-    private List<String> baiduSp(String uaModel){
-        String  url = null;
+    private List<String> baiduSp(String uaModel) {
+        String url = null;
         try {
-            url = "http://www.baidu.com/s?wd="+ URLEncoder.encode(uaModel,"UTF-8");
+            url = "http://www.baidu.com/s?wd=" + URLEncoder.encode(uaModel, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         return httpClientSp(url);
     }
 
-    private  List<String> httpClientSp(String url){
-        List<String> spList=new ArrayList<>();
+    private List<String> httpClientSp(String url) {
+        List<String> spList = new ArrayList<>();
 
-        String htmlStr= HttpClientUtil.httpBaiduGet(url);
+        String htmlStr = HttpClientUtil.httpBaiduGet(url);
 
         Document doc = Jsoup.parse(htmlStr);
-        Elements elements=doc.getElementsByClass("c-abstract");
+        Elements elements = doc.getElementsByClass("c-abstract");
         for (Element element : elements) {
-            String text=element.text();
+            String text = element.text();
             spList.add(text);
         }
-        if(elements.size()==0){
-            if(htmlStr.contains("<title>百度安全验证</title>")){
+        if (elements.size() == 0) {
+            if (htmlStr.contains("<title>百度安全验证</title>")) {
                 log.info("百度安全验证");
             }
         }
@@ -234,33 +236,32 @@ public class ModelService {
     }
 
 
-
-    private  String getUAModel(String ua){
-        if(ua.toLowerCase().contains("linux;")){//安卓判断
-            String[] uas=ua.split(";");
+    private String getUAModel(String ua) {
+        if (ua.toLowerCase().contains("linux;")) {//安卓判断
+            String[] uas = ua.split(";");
             for (String s : uas) {
-                String uaTrim=(s.trim());
-                if(uaTrim.contains("Build/")){
-                    String[] uaModels=uaTrim.split("Build/");
-                    if(uaModels.length!=0){
+                String uaTrim = (s.trim());
+                if (uaTrim.contains("Build/")) {
+                    String[] uaModels = uaTrim.split("Build/");
+                    if (uaModels.length != 0) {
                         return (uaModels[0]).trim();
                     }
 
                 }
 
             }
-        }else if(ua.toLowerCase().contains("iPhone;")){
+        } else if (ua.toLowerCase().contains("iPhone;")) {
             return "iPhone";
         }
         return null;
     }
 
-    private  IModel getIModel(List<String> uaModellist,String uaModel) {
+    private IModel getIModel(List<String> uaModellist, String uaModel) {
         try {
-            if(dictMap==null || dictMap.size()==0){
-                synchronized (dictMap){
-                    if(dictMap.size()==0){
-                        dictMap=getDictMap();
+            if (dictMap == null || dictMap.size() == 0) {
+                synchronized (dictMap) {
+                    if (dictMap.size() == 0) {
+                        dictMap = getDictMap();
                     }
                 }
             }
@@ -273,9 +274,9 @@ public class ModelService {
                         if (content.toUpperCase().contains(s.toUpperCase())) {
                             getTotalMap(totalMap, brand);
                             //-------获取手机型号
-                            String contentUp=content.toUpperCase();
-                            String sUp=s.toUpperCase();
-                            String modelStr = content.substring(contentUp.indexOf(sUp), (contentUp.indexOf(sUp) + 20)>content.length()?contentUp.length():(contentUp.indexOf(sUp) + 20));
+                            String contentUp = content.toUpperCase();
+                            String sUp = s.toUpperCase();
+                            String modelStr = content.substring(contentUp.indexOf(sUp), (contentUp.indexOf(sUp) + 20) > content.length() ? contentUp.length() : (contentUp.indexOf(sUp) + 20));
                             Pattern pat = Pattern.compile(REGEX_CHINESE);
                             Matcher mat = pat.matcher(modelStr);
                             modelStr = (mat.replaceAll(" "));
@@ -335,20 +336,20 @@ public class ModelService {
     }
 
 
-    private Map<String,List<String>> getDictMap(){
-        Map<String,List<String>> dictMap=new HashMap<>();
-        String sql="SELECT * FROM `model_dict`";
-        List<Map<String,Object>> dictList= jdbcTemplate.queryForList(sql);
+    private Map<String, List<String>> getDictMap() {
+        Map<String, List<String>> dictMap = new HashMap<>();
+        String sql = "SELECT * FROM `model_dict`";
+        List<Map<String, Object>> dictList = jdbcTemplate.queryForList(sql);
         for (Map<String, Object> map : dictList) {
-            String brand= (String) map.get("brand");
-            String keywork= (String) map.get("keyword");
-            List<String> list=Arrays.asList(keywork.split(","));
-            dictMap.put(brand,list);
+            String brand = (String) map.get("brand");
+            String keywork = (String) map.get("keyword");
+            List<String> list = Arrays.asList(keywork.split(","));
+            dictMap.put(brand, list);
         }
         return dictMap;
     }
 
-    private  void getTotalMap(Map<String, Integer> totalMap, String brand) {
+    private void getTotalMap(Map<String, Integer> totalMap, String brand) {
         Integer count = totalMap.get(brand);
         if (count == null) {
             count = 0;

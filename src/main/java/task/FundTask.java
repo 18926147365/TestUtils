@@ -27,10 +27,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,7 +81,7 @@ public class FundTask {
         int fundTotal = 0;
         double totalCalcMoney = 0d;
         Date now = new Date();
-        Set<String> existsFundSet = new HashSet<>();
+        Map<String, FundStatModel> fundStatMap = new HashMap<>();
         for (Fund fund : fundList) {
             String fundCode = fund.getFundCode();
             String result = (HttpClientUtil.httpGet("http://fundgz.1234567.com.cn/js/" + fundCode + ".js"));
@@ -97,8 +94,6 @@ public class FundTask {
                 String fundName = fundJson.getString("name");
                 String gztime = fundJson.getString("gztime") + ":00";
                 BigDecimal gszzl = fundJson.getBigDecimal("gszzl");
-
-
                 if (daySdf.parse(gztime).getTime() == daySdf.parse(daySdf.format(now)).getTime()) {
                     fundTotal++;
                 } else {
@@ -107,28 +102,49 @@ public class FundTask {
                 Date gzDate = sdf.parse(gztime);
                 double calcAmount = calcFund(fund);
                 double calcValue = (calcAmount * gszzl.doubleValue() / 100);
-                if (!existsFundSet.contains(fundCode)) {
-                    tipBuilder.append("[" + gszzl + "%]");
-                    tipBuilder.append(fundName);
-                    tipBuilder.append("\n");
+                if (!fundStatMap.containsKey(fundCode)) {
                     if (gszzl.doubleValue() > 0) {
                         upFundTotal++;
                     } else {
                         downFundTotal++;
                     }
+                    FundStatModel statModel = new FundStatModel();
+                    statModel.setGszzl(gszzl);
+                    statModel.setCalcAmount(calcValue);
+                    statModel.setFundCode(fundCode);
+                    statModel.setFundName(fundName);
+                    fundStatMap.put(fundCode, statModel);
+                } else {
+                    FundStatModel statModel = fundStatMap.get(fundCode);
+                    statModel.setCalcAmount(statModel.getCalcAmount() + calcValue);
+                    fundStatMap.put(fundCode, statModel);
                 }
                 totalCalcMoney = totalCalcMoney + calcValue;
-
                 fundService.updateFund(fund.getId(), gszzl, gzDate);
-                existsFundSet.add(fundCode);
             }
         }
         if (fundTotal > 0) {
+            for (String fundCode : fundStatMap.keySet()) {
+                FundStatModel statModel = fundStatMap.get(fundCode);
+                String gszzStr = statModel.getGszzl().toString();
+                String calcMoney = (statModel.getCalcAmount().intValue())+"";
+                if (statModel.getGszzl().doubleValue() > 0) {
+                    gszzStr = "+" + statModel.getGszzl().toString();
+                }
+                if((statModel.getCalcAmount().intValue())>0){
+                    calcMoney = "+"+(statModel.getCalcAmount().intValue());
+                }
+                tipBuilder.append("[").append(gszzStr).append("%]:");
+                tipBuilder.append(statModel.getFundName());
+                tipBuilder.append("(").append(calcMoney).append("元)\n");
+            }
+
             String dateDay = daySdf.format(new Date());
-            String content = title+"%s\n涨:%s支 跌:%s支\n收益:%s元\n";
+            String content = title + "%s\n涨:%s支 跌:%s支\n收益:%s元\n";
             content = String.format(content, dateDay, upFundTotal, downFundTotal, (int) totalCalcMoney);
-            content+=tipBuilder.toString();
+            content += tipBuilder.toString();
             DingText dingText = new DingText(content);
+            dingText.setAtAll(true);
             DingTalkSend dingTalkSend = new DingTalkSend(dingText);
             dingTalkSend.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
             dingTalkSend.send();
@@ -177,5 +193,47 @@ public class FundTask {
             fundMapper.updateCalcFund(fund.getId(), new BigDecimal(total), lastDate);
         }
         return total;
+    }
+
+    class FundStatModel {
+        private String fundCode;
+
+        private String fundName;
+
+        private Double calcAmount;
+
+        private BigDecimal gszzl;
+
+        public BigDecimal getGszzl() {
+            return gszzl;
+        }
+
+        public void setGszzl(BigDecimal gszzl) {
+            this.gszzl = gszzl;
+        }
+
+        public String getFundCode() {
+            return fundCode;
+        }
+
+        public void setFundCode(String fundCode) {
+            this.fundCode = fundCode;
+        }
+
+        public String getFundName() {
+            return fundName;
+        }
+
+        public void setFundName(String fundName) {
+            this.fundName = fundName;
+        }
+
+        public Double getCalcAmount() {
+            return calcAmount;
+        }
+
+        public void setCalcAmount(Double calcAmount) {
+            this.calcAmount = calcAmount;
+        }
     }
 }

@@ -9,5 +9,5 @@ import com.dingtalk.api.request.OapiRobotSendRequest;
  */
 public abstract class DingContentType {
 
-public abstract OapiRobotSendRequest content();
+    public abstract OapiRobotSendRequest content();
 }

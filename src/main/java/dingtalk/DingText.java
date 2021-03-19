@@ -11,6 +11,15 @@ public class DingText extends DingContentType {
 
     private String content;
 
+    private Boolean isAtAll;
+
+    public Boolean getAtAll() {
+        return isAtAll;
+    }
+
+    public void setAtAll(Boolean atAll) {
+        isAtAll = atAll;
+    }
 
     public String getContent() {
         return content;
@@ -20,9 +29,11 @@ public class DingText extends DingContentType {
         this.content = content;
     }
 
-    public DingText(){}
-    public DingText(String content){
-        this.content=content;
+    public DingText() {
+    }
+
+    public DingText(String content) {
+        this.content = content;
     }
 
     @Override
@@ -33,9 +44,7 @@ public class DingText extends DingContentType {
         text.setContent(getContent());
         request.setText(text);
         OapiRobotSendRequest.At at = new OapiRobotSendRequest.At();
-////        at.setAtMobiles(Arrays.asList("132xxxxxxxx"));
-//// isAtAll类型如果不为Boolean，请升级至最新SDK
-        at.setIsAtAll(true);
+        at.setIsAtAll(this.isAtAll);
         request.setAt(at);
         return request;
     }
