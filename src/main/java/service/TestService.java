@@ -1,6 +1,11 @@
 package service;
 
+import bean.User;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.support.WebApplicationContextUtils;
+import utils.DPUtils;
 
 import java.util.Date;
 
@@ -12,15 +17,24 @@ import java.util.Date;
 @Service
 public class TestService {
 
+    private Integer age;
 
-    public void test(){
-        try {
-            Thread.sleep(3000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        System.out.println("test");
+    public Integer getAge() {
+        return age;
     }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public void test(User user){
+       this.age=100;
+        DPUtils.test(user);
+    }
+    public void test1(User user){
+
+    }
+
 
     public String getName(){
         try {

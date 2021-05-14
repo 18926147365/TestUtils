@@ -1,6 +1,7 @@
 package utils;
 
 import bean.Shop;
+import bean.User;
 import mapper.UserMapper;
 
 import java.util.ArrayList;
@@ -12,6 +13,10 @@ import java.util.List;
  * @Date: 2020/12/30 上午11:02
  */
 public class DPUtils {
+
+    public static void test(User user){
+        System.out.println(user.getId());
+    }
 
     public static void main(String[] args) throws Exception {
         UserMapper userMapper;

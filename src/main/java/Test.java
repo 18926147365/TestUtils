@@ -25,6 +25,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.omg.PortableInterceptor.INACTIVE;
+import org.springframework.util.Base64Utils;
+import sun.jvm.hotspot.utilities.Bits;
 import system.DeloyTask;
 import system.People;
 import system.Singleton;
@@ -36,10 +38,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.SocketAddress;
-import java.net.URLEncoder;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -116,8 +115,8 @@ public class Test {
 
     private static Queue<User> reStartOrderActivityQueue = new ArrayBlockingQueue<>(10);
 
-    private static void calcFund(String fundCode){
-       String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/"+fundCode+".js");
+    private static void calcFund(String fundCode) {
+        String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fundCode + ".js");
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("js");
         try {
@@ -132,19 +131,28 @@ public class Test {
             Double datetime = (Double) mirror.get("x");
             Object obj = mirror.get("equityReturn");
             Double equityReturn = new Double("0");
-            if(obj instanceof Integer){
-                equityReturn = Double.valueOf( (Integer) mirror.get("equityReturn"));
-            }else if(obj instanceof Double){
-                equityReturn = (Double)obj;
+            if (obj instanceof Integer) {
+                equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
+            } else if (obj instanceof Double) {
+                equityReturn = (Double) obj;
             }
             System.out.println(sdf.format(new Date(datetime.longValue())));
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        for (int i = 0; i<=1; i++) {
+            System.out.println(i);
+        }
+    }
 
-
-       calcFund("001593");
+    public int singleNumber(int[] nums) {
+        int result = 0;
+        for (int i = 0; i < nums.length; i++) {
+            result ^= nums[i];
+            System.out.println(result);
+        }
+        return result;
     }
 
     Object str1 = new Object();
@@ -517,4 +525,114 @@ public class Test {
             throw new RuntimeException(exp);
         }
     }
+
+
+//
+//
+//    private void initTestData() throws Exception {
+//        String date = "04/22/21";
+//        Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/tt.sh "+date);
+//        Thread.sleep(1100);
+//        OpercarMenberTotal total = new OpercarMenberTotal();
+//        total.setAcctId("10001176");
+//        List<OpercarMenberTotal> dellist = total.select();
+//        for (OpercarMenberTotal opercarMenberTotal : dellist) {
+//            opercarMenberTotal.setAcctId("-1");
+//            opercarMenberTotal.update();
+//
+//        }
+//        MktStatUserOilLiter mktStatUserOilLiter = new MktStatUserOilLiter();
+//        mktStatUserOilLiter.setUserId("10001176");
+//        mktStatUserOilLiter.load();
+//        MktStatUserOilLiter del = new MktStatUserOilLiter();
+//        del.setId(mktStatUserOilLiter.getId());
+//        del.delete();
+//        ThreadContext.commit();
+//    }
+//
+//    public String test() throws Exception {
+//        initTestData();
+//        Map<Integer,BigDecimal> oilMap = new TreeMap<>();
+//
+//        oilMap.put(4, new BigDecimal("599"));//4月份
+//        oilMap.put(5, new BigDecimal("0"));//5月份
+//        oilMap.put(6, new BigDecimal("1"));//6月份
+//        oilMap.put(7, new BigDecimal("0"));//7月份
+//        oilMap.put(8, new BigDecimal("0"));//8月份
+//        oilMap.put(9, new BigDecimal("0"));//9月份
+//        List<String> resultStr = new ArrayList<>();
+//
+//        for (Integer month : oilMap.keySet()) {
+//            String date = "0"+month+"/22/21";
+//
+//            Runtime.getRuntime().exec("sh /Users/lihaoming/data/shell/tt.sh "+date);
+//            Thread.sleep(500);
+//            String resp = test377();//是否有优惠
+//            OpercarMenberTotal total = new OpercarMenberTotal();
+//            total.setId(month);
+//            total.setAcctId("10001176");
+//            total.settMonth("2021-0"+month);
+//            total.setTotalLitter(oilMap.get(month));
+//            total.setTotalMoney(new BigDecimal("4"));
+//            total.setStatMonth(Integer.valueOf("20210"+month));
+//            total.setCertifiTime(new Date("2021-0"+month+"-16 01:03:04"));
+//            total.setCreateTime(new Date("2021-0"+month+"-16 01:03:04"));
+//            if(oilMap.get(month).doubleValue()!=0){
+//                total.update();
+//            }
+//
+//            MktStatUserOilLiter oilLiter = new MktStatUserOilLiter();
+//            oilLiter.setUserId("10001176");
+//            oilLiter.load();
+//
+//            String cumuStr = "";
+//            if(oilLiter.getCumulativeStartTime() != null ){
+//                cumuStr = oilLiter.getCumulativeStartTime().getDateStr();
+//            }
+//            String str = month+"月份加油:"+resp + ",加油"+oilMap.get(month)+"升"+",计算开始时间:"+ cumuStr;
+//            resultStr.add(str);
+//        }
+//        System.out.println("3月份运营车认证");
+//        for (String s : resultStr) {
+//            System.out.println(s);
+//        }
+//        System.out.println("——————————————————————————————————");
+//        return "!";
+//    }
+//    private String test377() throws Exception {
+//        String str = HttpClientUtils.doGet("http://localhost:18816/api/api/auth/getAccessToken?appNo=yxzxhx&appKey=8F3BAC1E202AD69CBE56C2B62F5F0B23");
+//        com.alibaba.fastjson.JSONObject authJson = com.alibaba.fastjson.JSONObject.parseObject(str);
+//        String token = authJson.getString("data");
+//        com.alibaba.fastjson.JSONObject paramsJson = com.alibaba.fastjson.JSONObject.parseObject("{\"orderType\":\"100\",\"amount\":\"12.26\",\"isOperateVehicleUser\":\"true\",\"orderNo\":\"\",\"userId\":\"18531938\",\"refuelPayMode\":\"98910\",\"matertialCode\":\"60209058\",\"proList\":[{\n" +
+//                "\"proCode\":\"60209058\",\"categoryCode\":\"汽油\",\"refuelGsOuCode\":\"33250141\",\"salePrice\":\"5.63\",\"num\":\"1\",\"amount\":\"5.63\",\"refuelGsOuName\":\"广州沙太加油站\",\"matertialCode\":\"60209058\",\"oilLiter\":\"1\"\n" +
+//                "},{\"proCode\":\"60209058\",\"categoryCode\":\"汽油\",\"refuelGsOuCode\":\"33250135\",\"salePrice\":\"6.63\",\"num\":\"1\",\"amount\":\"6.63\",\"refuelGsOuName\":\"广州天平架加油站\",\"matertialCode\":\"60209058\",\"oilLiter\":\"1\"\n" +
+//                "}]}");
+//        Set<String> set = paramsJson.keySet();
+//        paramsJson.put("userId","10001176");
+//        Map<String,String> params = new HashMap<>();
+//        for (String key : set) {
+//            params.put(key,paramsJson.getString(key));
+//        }
+//        String url = "http://localhost:18816/market/api/mkt_promote/queryPromoteActivityDiscountList?token="+token;
+//        String result = HttpClientUtils.doPost(url,params);
+//        com.alibaba.fastjson.JSONObject resultJSON = com.alibaba.fastjson.JSONObject.parseObject(result);
+//        JSONArray array = resultJSON.getJSONArray("data");
+//        String response= "";
+//        for (int i = 0; i < array.size(); i++) {
+//            JSONObject dataJson = array.getJSONObject(i);
+//            BigDecimal afterAmount = dataJson.getBigDecimal("afterAmount");
+//            BigDecimal amount = dataJson.getBigDecimal("amount");
+////            System.out.println("优惠前金额:"+afterAmount.toString());
+////            System.out.println("优惠后金额:"+amount.toString());
+//            if(afterAmount.doubleValue() == amount.doubleValue()){
+//                response="无优惠";
+//            }else {
+//                response="可享受优惠";
+//            }
+//            break;
+//        }
+//
+//        return response;
+//
+//    }
 }

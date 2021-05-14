@@ -1,5 +1,6 @@
 package config;
 
+import bean.User;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -38,6 +39,12 @@ public class RedisConfig {
 
     @Value("${redis.JmxEnabled}")
     private Boolean JmxEnabled;
+
+    @Bean
+    public User userPool(){
+        User user = new User("#1123123");
+        return user;
+    }
 
     @Bean
     public JedisPool jedisPoolFactory() {

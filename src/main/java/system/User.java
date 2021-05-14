@@ -17,6 +17,8 @@ public  class  User extends People{
 
     @Override
     public void runs() {
+        String str = new String("1");
+
 
     }
     

@@ -14,8 +14,10 @@ import javassist.NotFoundException;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.checkerframework.checker.units.qual.C;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,10 +46,9 @@ import java.util.concurrent.*;
  * @descroption
  */
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+//@RunWith(SpringRunner.class)
+//@SpringBootTest(classes = Application.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class test {
-
 
     @Autowired
     private static RedisLuaUtils redisLuaUtils;
@@ -60,10 +61,8 @@ public class test {
     static int total=1000;
     @Test
     public void Run() throws Exception {
-        while (true){
-            Class.forName("Hello");
-        }
-
+        Integer a = 1;
+        Assert.assertEquals(1,1);
     }
 
     @Test
