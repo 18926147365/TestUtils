@@ -182,6 +182,14 @@
             <artifactId>alibaba-dingtalk-service-sdk</artifactId>
             <version>1.0.1</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.alibaba/easyexcel -->
+        <!-- https://mvnrepository.com/artifact/com.alibaba/easyexcel -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>easyexcel</artifactId>
+            <version>2.2.9</version>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>

@@ -20,7 +20,7 @@ public interface UserMapper {
 
     void save(User user);
 
-    void insertBatch(List<User> list);
+    void insertBatch(@Param("list") List<User> list);
 
     List<User> queryMoney();
 

@@ -1,12 +1,17 @@
 package controller;
 
+import bean.BigModel;
 import bean.Fund;
 import bean.User;
 import bean.UserInfo;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.Stopwatch;
 import com.google.common.hash.BloomFilter;
 import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
+import easyexcel.DemoData;
+import easyexcel.DemoDataListener;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -15,8 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import mapper.FundMapper;
 import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.omg.PortableServer.POA;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.StopWatch;
@@ -159,7 +166,7 @@ public class TestController {
     }
 
 
-    static ExecutorService pool = new ThreadPoolExecutor(20, 20, 5000,
+    static ExecutorService pool = new ThreadPoolExecutor(1, 1, 5000,
             TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(),
             Executors.defaultThreadFactory(),
@@ -169,10 +176,25 @@ public class TestController {
         ((ThreadPoolExecutor) pool).allowCoreThreadTimeOut(true);
     }
 
-
     @RequestMapping("/test")
     public String test(HttpServletRequest request) {
+        for (int i = 0; i < 100000; i++) {
+            final int k = i;
+            BigModel bigModel = new BigModel(k);
+            pool.submit(new Runnable() {
+                @Override
+                public void run() {
 
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println(((ThreadPoolExecutor) pool).getQueue().size());
+//                    bigModel.getContent();
+                }
+            });
+        }
 
         return "123";
     }
@@ -480,8 +502,69 @@ public class TestController {
     @Autowired
     private FundTask fundTask;
 
+    @Autowired
+    private User userPool1;
+
     @RequestMapping("/test377")
-    public void test377() throws Exception {
-        fundTask.execute("123");
+    public String test377() throws Exception {
+        String str = HttpClientUtil.get("http://localhost:18816/api/api/auth/getAccessToken?appNo=yxzxhx&appKey=8F3BAC1E202AD69CBE56C2B62F5F0B23");
+        JSONObject authJson = JSONObject.parseObject(str);
+        String token = authJson.getString("data");
+        JSONObject paramsJson = JSONObject.parseObject("{\"orderType\":\"100\",\"amount\":\"12.26\",\"isOperateVehicleUser\":\"true\",\"orderNo\":\"\",\"userId\":\"18531938\",\"refuelPayMode\":\"98910\",\"matertialCode\":\"60209058\",\"proList\":[{\n" +
+                "\"proCode\":\"60209058\",\"categoryCode\":\"汽油\",\"refuelGsOuCode\":\"33250141\",\"salePrice\":\"5.63\",\"num\":\"1\",\"amount\":\"5.63\",\"refuelGsOuName\":\"广州沙太加油站\",\"matertialCode\":\"60209058\",\"oilLiter\":\"1\"\n" +
+                "},{\"proCode\":\"60209058\",\"categoryCode\":\"汽油\",\"refuelGsOuCode\":\"33250135\",\"salePrice\":\"6.63\",\"num\":\"1\",\"amount\":\"6.63\",\"refuelGsOuName\":\"广州天平架加油站\",\"matertialCode\":\"60209058\",\"oilLiter\":\"1\"\n" +
+                "}]}");
+        Set<String> set = paramsJson.keySet();
+        paramsJson.put("userId", "10001176");
+        Map<String, String> params = new HashMap<>();
+        for (String key : set) {
+            params.put(key, paramsJson.getString(key));
+        }
+        String url = "http://localhost:18816/market/api/mkt_promote/queryPromoteActivityDiscountList?token=" + token;
+        String result = HttpClientUtil.doPost(url, params);
+        System.out.println("请求响应:" + result);
+        JSONObject resultJSON = JSONObject.parseObject(result);
+        JSONArray array = resultJSON.getJSONArray("data");
+        String response = "";
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject dataJson = array.getJSONObject(i);
+            BigDecimal afterAmount = dataJson.getBigDecimal("afterAmount");
+            BigDecimal amount = dataJson.getBigDecimal("amount");
+            System.out.println("优惠前金额:" + afterAmount.toString());
+            System.out.println("优惠后金额:" + amount.toString());
+            if (afterAmount.doubleValue() == amount.doubleValue()) {
+                System.out.println("没有优惠");
+                response = "没有优惠";
+            } else {
+                System.out.println("已优惠金额");
+                response = "已优惠";
+            }
+            break;
+        }
+
+        return new Date().getTime() + ":" + response;
+
+    }
+
+    @RequestMapping("/test113")
+    public void test113(int i) {
+        StringBuilder sb = new StringBuilder();
+            for (int j = 0; j < 10000; j++) {
+            try {
+                Thread.sleep(11);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            BigModel bigModel = new BigModel(1);
+            sb.append( bigModel.getContent());
+        }
+    }
+
+    Object object = new Object();
+
+    @RequestMapping("/test114")
+    public void test114(int i) {
+         String path = "/Users/lihaoming/Desktop/demo.xlsx";
+        EasyExcel.read(path, DemoData.class, new DemoDataListener(userMapper)).sheet().doRead();
     }
 }
