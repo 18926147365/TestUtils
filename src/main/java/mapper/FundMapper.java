@@ -21,4 +21,9 @@ public interface FundMapper {
     void updateFund(@Param(value = "id") Integer id, @Param(value = "gszzl") BigDecimal gszzl, @Param(value = "gztime") Date gztime);
 
     void updateCalcFund(@Param(value = "id") Integer id, @Param(value = "calcAmount") BigDecimal calcAmount, @Param(value = "calcTime") Date calcTime);
+
+    void updateEarFund(@Param(value = "id") Integer id, @Param(value = "earAmount") BigDecimal earAmount, @Param(value = "earTime") Date earTime);
+
+
+    BigDecimal totalCaclAmount(@Param(value = "ids") List<Integer> ids);
 }

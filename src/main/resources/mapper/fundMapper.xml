@@ -11,8 +11,11 @@
         <result column="pay_time" property="payTime"></result>
         <result column="calc_amount" property="calcAmount"></result>
         <result column="calc_time" property="calcTime"></result>
+        <result column="ear_amount" property="earAmount"></result>
+        <result column="ear_time" property="earTime"></result>
         <result column="gszzl" property="gszzl"></result>
         <result column="gztime" property="gztime"></result>
+        <result column="belong_name" property="belongName"></result>
     </resultMap>
     <select id="queryById" resultMap="BaseResultMap">
         select * from fund where id=#{id};
@@ -26,6 +29,14 @@
     <update id="updateCalcFund">
         update fund set calc_time=#{calcTime},calc_amount=#{calcAmount} where id = #{id}
     </update>
-
+    <update id="updateEarFund">
+        update fund set ear_time=#{earTime},ear_amount=#{earAmount} where id = #{id}
+    </update>
+    <select id="totalCaclAmount" resultType="java.math.BigDecimal" >
+        select SUM(calc_amount) from fund where id in
+        <foreach item="item" index="index" collection="ids" open="("  close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 
 </mapper>

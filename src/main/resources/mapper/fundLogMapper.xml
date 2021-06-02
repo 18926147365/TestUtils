@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.FundLogMapper">
+    <resultMap id="BaseResultMap" type="bean.FundLog">
+        <result column="id" property="id"></result>
+        <result column="fund_id" property="fundId"></result>
+        <result column="fund_name" property="fundName"></result>
+        <result column="calc_date" property="calcDate"></result>
+        <result column="gszzl" property="gszzl"></result>
+        <result column="calc_amount" property="calcAmount"></result>
+        <result column="modify_time" property="modifyTime"></result>
+
+    </resultMap>
+
+
+    <select id="queryById" resultMap="BaseResultMap">
+        select * from fund_log where fund_id = #{fundId}
+    </select>
+
+    <insert id="insert" parameterType="FundLog">
+        INSERT INTO `fund_log` (fund_id,fund_code,calc_date,gszzl,calc_amount,modify_time)
+            values(#{fundId},#{fundCode},#{calcDate},#{gszzl},#{calcAmount},sysdate())
+    </insert>
+
+    <insert id="update" parameterType="FundLog">
+        update fund_log set fund_id = #{fundId},fund_code = #{fundCode},calc_date = #{calcDate},
+        gszzl = #{gszzl},calc_amount = #{calcAmount},modify_time = sysdate() where id =#{id}
+    </insert>
+</mapper>

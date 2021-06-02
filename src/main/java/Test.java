@@ -2,6 +2,7 @@ import bean.BinTree;
 import bean.Fund;
 import bean.IModel;
 import bean.Shop;
+import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -9,6 +10,8 @@ import com.google.common.base.Stopwatch;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 
+import dingtalk.DingTalkSend;
+import dingtalk.DingText;
 import io.netty.util.concurrent.ThreadPerTaskExecutor;
 import javafx.concurrent.Task;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -18,18 +21,7 @@ import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-import org.omg.PortableInterceptor.INACTIVE;
-import org.springframework.util.Base64Utils;
-import sun.jvm.hotspot.utilities.Bits;
-import system.DeloyTask;
-import system.People;
-import system.Singleton;
+
 import system.User;
 import utils.*;
 
@@ -141,11 +133,22 @@ public class Test {
     }
 
     public static void main(String[] args) throws Exception {
-        for (int i = 0; i<=1; i++) {
-            System.out.println(i);
-        }
+        ddasd();
+
     }
 
+    public static void ddasd(){
+        String content ="2020-05-31 11:30:00\n下午收益:-133元\n今天收益:+421元\n涨:4支,跌:0支\n总金额:20421元\n";
+        StringBuilder builder = new StringBuilder();
+        builder.append("[+").append("1.3%").append("]").append("天弘创业板ETF联接基金C").append("(+").append("31").append("元)\n");
+        builder.append("[+").append("3.3%").append("]").append("中欧医疗健康混合C").append("(+").append("81").append("元)");
+        content +=builder.toString();
+        DingText dingText = new DingText(content);
+        dingText.setAtAll(true);
+        DingTalkSend dingTalkSend = new DingTalkSend(dingText);
+        dingTalkSend.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
+        dingTalkSend.send();
+    }
     public int singleNumber(int[] nums) {
         int result = 0;
         for (int i = 0; i < nums.length; i++) {

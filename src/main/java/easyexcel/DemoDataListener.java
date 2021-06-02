@@ -23,6 +23,8 @@ public class DemoDataListener extends AnalysisEventListener<DemoData> {
     public DemoDataListener(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
+    public DemoDataListener() {
+    }
 
     @Override
     public void invoke(DemoData demoData, AnalysisContext analysisContext) {
