@@ -23,8 +23,8 @@ public class FundService {
     private FundMapper fundMapper;
 
 
-    public List<Fund> queryAll(){
-        return fundMapper.queryAll();
+    public List<Fund> queryAll(Integer state){
+        return fundMapper.queryAll(state);
     }
 
     public void updateFund( Integer id,BigDecimal gszzl, Date gztime){

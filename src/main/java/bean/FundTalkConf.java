@@ -14,7 +14,7 @@ public class FundTalkConf {
 
     private Integer id;
 
-    private Integer fundId;
+    private String belongName ;
 
     private String accessToken;
 

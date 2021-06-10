@@ -571,7 +571,13 @@ public class TestController {
 
     @RequestMapping("/ccc")
     public void test115(int i) {
-     fundTask.notifyTalk(2);
+        try {
+            fundTask.execute(i);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
     }

@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface FundMapper {
 
-    List<Fund> queryAll();
+    List<Fund> queryAll(@Param(value="state") Integer state) ;
 
     Fund queryById(@Param(value = "id") Integer id);
 
@@ -24,6 +24,11 @@ public interface FundMapper {
 
     void updateEarFund(@Param(value = "id") Integer id, @Param(value = "earAmount") BigDecimal earAmount, @Param(value = "earTime") Date earTime);
 
+    List<Fund> queryByBelongName(@Param(value = "belongName") String belongName);
 
     BigDecimal totalCaclAmount(@Param(value = "ids") List<Integer> ids);
+
+    BigDecimal totalAmount(@Param(value = "belongName") String belongName);
+
+    BigDecimal totalEarAmount(@Param(value = "belongName") String belongName);
 }

@@ -21,7 +21,7 @@
         select * from fund where id=#{id};
     </select>
     <select id="queryAll" resultMap="BaseResultMap">
-        select * from fund where state = 0;
+        select * from fund where state = #{state};
     </select>
     <update id="updateFund">
         update fund set gszzl = #{gszzl}, gztime = #{gztime} where id = #{id}
@@ -38,5 +38,18 @@
             #{item}
         </foreach>
     </select>
+
+    <select id="totalAmount" resultType="java.math.BigDecimal" >
+       select SUM(calc_amount) from fund where belong_name = #{belongName} and state in(0,1,-1);
+    </select>
+
+    <select id="totalEarAmount" resultType="java.math.BigDecimal" >
+       select SUM(ear_amount) from fund where belong_name = #{belongName} and state = 0
+    </select>
+
+    <select id="queryByBelongName" resultMap="BaseResultMap">
+        select * from fund where belong_name = #{belongName};
+    </select>
+
 
 </mapper>

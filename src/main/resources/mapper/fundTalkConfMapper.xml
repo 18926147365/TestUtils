@@ -5,7 +5,7 @@
     <resultMap id="BaseResultMap" type="bean.FundTalkConf">
         <result column="id" property="id"></result>
         <result column="access_token" property="accessToken"></result>
-        <result column="fund_id" property="fundId"></result>
+        <result column="belong_name" property="belongName"></result>
         <result column="state" property="state"></result>
         <result column="create_time" property="createTime"></result>
 

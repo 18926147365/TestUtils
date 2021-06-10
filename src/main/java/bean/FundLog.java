@@ -22,7 +22,7 @@ public class FundLog {
 
     private BigDecimal gszzl;
 
-    private BigDecimal calcAmount;
+    private BigDecimal earAmount;
 
     private Date modifyTime;
 

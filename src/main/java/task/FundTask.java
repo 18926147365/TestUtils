@@ -5,6 +5,7 @@ import bean.FundLog;
 import bean.FundTalkConf;
 import bean.NettyMsg;
 import com.alibaba.fastjson.JSONObject;
+import dingtalk.DingMarkDown;
 import dingtalk.DingTalkSend;
 import dingtalk.DingText;
 import io.netty.buffer.ByteBuf;
@@ -85,16 +86,7 @@ public class FundTask {
     public void execute(Integer type) throws ParseException, IOException {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         SimpleDateFormat daySdf = new SimpleDateFormat("yyyy-MM-dd");
-
-
-        List<Fund> fundList = fundService.queryAll();
-        StringBuilder tipBuilder = new StringBuilder();
-        int upFundTotal = 0;
-        int downFundTotal = 0;
-        int fundTotal = 0;
-        double totalCalcMoney = 0d;
-        Date now = new Date();
-        Map<String, FundStatModel> fundStatMap = new HashMap<>();
+        List<Fund> fundList = fundService.queryAll(0);
         Map<String, String> fundResultCache = new HashMap<>();
         for (Fund fund : fundList) {
             String fundCode = fund.getFundCode();
@@ -107,75 +99,58 @@ public class FundTask {
             if (matcher.find()) {
                 fundResultCache.put(fundCode, result);
                 String json = matcher.group(2);
-                log.info("数据更新:" + json);
                 JSONObject fundJson = (JSONObject.parseObject(json));
-                String fundName = fundJson.getString("name");
-
+                if (fundJson == null) {
+                    continue;
+                }
+                log.info("数据更新:" + json);
                 String gztime = fundJson.getString("gztime") + ":00";
-                BigDecimal gszzl = fundJson.getBigDecimal("gszzl");
-                if (daySdf.parse(gztime).getTime() == daySdf.parse(daySdf.format(now)).getTime()) {
-                    fundTotal++;
+                //判断今天是否是基金计算日
+                if (daySdf.parse(gztime).getTime() == daySdf.parse(daySdf.format(new Date())).getTime()) {
+
                 } else {
-                    break;
+                    return;
                 }
-                Date gzDate = sdf.parse(gztime);
-                double calcAmount = calcFund(fund);
-                double calcValue = (calcAmount * gszzl.doubleValue() / 100);
-                String fundKeyName = fundCode + fund.getBelongName();
-                if (!fundStatMap.containsKey(fundKeyName)) {
-                    if (gszzl.doubleValue() > 0) {
-                        upFundTotal++;
-                    } else {
-                        downFundTotal++;
-                    }
-                    FundStatModel statModel = new FundStatModel();
-                    statModel.setGszzl(gszzl);
-                    statModel.setCalcAmount(calcValue);
-                    statModel.setFundCode(fundCode);
-                    statModel.setFundName(fundName);
-                    statModel.setBelongName(fund.getBelongName());
-                    statModel.setFundId(fund.getId());
-                    fundStatMap.put(fundKeyName, statModel);
-                } else {
-                    FundStatModel statModel = fundStatMap.get(fundCode);
-                    statModel.setCalcAmount(statModel.getCalcAmount() + calcValue);
-                    fundStatMap.put(fundKeyName, statModel);
-                }
-                totalCalcMoney = totalCalcMoney + calcValue;
-                fundService.updateFund(fund.getId(), gszzl, gzDate);
+                //当前收益计算
+                fundMapper.updateFund(fund.getId(), fundJson.getBigDecimal("gszzl"), (fundJson.getDate("gztime")));
+                updateEarAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
+                updateCalcAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
             }
         }
-        if (fundTotal > 0) {
-            for (String fundKeyName : fundStatMap.keySet()) {
-                FundStatModel statModel = fundStatMap.get(fundKeyName);
-                log.info("结算基金代码:" + statModel.getFundCode() + ",基金名称:" + statModel.getFundName() +
-                        ",归属者:" + statModel.getBelongName() + ",金额变化:" + statModel.getCalcAmount().longValue() + "元");
-                String gszzStr = statModel.getGszzl().toString();
-                String calcMoney = (statModel.getCalcAmount().intValue()) + "";
-                if (statModel.getGszzl().doubleValue() > 0) {
-                    gszzStr = "+" + statModel.getGszzl().toString();
-                }
-                if ((statModel.getCalcAmount().intValue()) > 0) {
-                    calcMoney = "+" + (statModel.getCalcAmount().intValue());
-                }
-                tipBuilder.append("[").append(gszzStr).append("%]:");
-                tipBuilder.append(statModel.getFundName());
-                tipBuilder.append("(").append(calcMoney).append("元)\n");
-                updateFundLog(statModel);
-            }
 
-//            String dateDay = daySdf.format(new Date());
-//            String content = title + "%s\n涨:%s支 跌:%s支\n收益:%s元\n";
-//            content = String.format(content, dateDay, upFundTotal, downFundTotal, (int) totalCalcMoney);
-//            content += tipBuilder.toString();
-//            DingText dingText = new DingText(content);
-//            dingText.setAtAll(true);
-//            DingTalkSend dingTalkSend = new DingTalkSend(dingText);
-//            dingTalkSend.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
-//            dingTalkSend.send();
 
-            updateFundNotify(fundStatMap);//钉钉通知
-            notifyTalk(type);
+        notifyTalk(type);
+    }
+
+
+    private void updateEarAmount(Fund fund, Date gztime, BigDecimal gszzl) {
+        BigDecimal earAmount = fund.getCalcAmount();
+        earAmount = earAmount.multiply(gszzl.multiply(new BigDecimal("0.01")));
+        fundMapper.updateEarFund(fund.getId(), earAmount, new Date());
+        FundStatModel statModel = new FundStatModel();
+        statModel.setEarAmount(earAmount);
+        statModel.setFundCode(fund.getFundCode());
+        statModel.setFundId(fund.getId());
+        statModel.setGszzl(gszzl);
+        updateFundLog(statModel);
+    }
+
+    private void updateCalcAmount(Fund fund, Date gztime, BigDecimal gszzl) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd ");
+        SimpleDateFormat sdf15 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date validDate = sdf15.parse(sdf.format(new Date()) + " 15:00:00");
+        if (validDate.getTime() == gztime.getTime() &&
+                fund.getCalcTime().getTime() < sdf.parse(sdf.format(new Date())).getTime()) {
+            BigDecimal calcAmount = fund.getCalcAmount().add(fund.getCalcAmount().multiply(gszzl).multiply(new BigDecimal("0.01")));
+            BigDecimal earAmount = fund.getCalcAmount();
+            earAmount = earAmount.multiply(gszzl.multiply(new BigDecimal("0.01")));
+            fundMapper.updateCalcFund(fund.getId(), calcAmount, new Date());
+            FundStatModel statModel = new FundStatModel();
+            statModel.setEarAmount(earAmount);
+            statModel.setFundCode(fund.getFundCode());
+            statModel.setFundId(fund.getId());
+            statModel.setGszzl(gszzl);
+            updateFundLog(statModel);
         }
     }
 
@@ -187,52 +162,63 @@ public class FundTask {
     }
 
     public void notifyTalk(Integer type) {
+        if(!(type==1 || type==2)){
+            return;
+        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         List<FundTalkConf> talkConfList = fundTalkConfMapper.queryAll();
         Map<String, List<Integer>> groupMap = new HashMap<>();
         for (FundTalkConf fundTalkConf : talkConfList) {
-            String accessToken = fundTalkConf.getAccessToken();
-            if (!groupMap.containsKey(accessToken)) {
-                groupMap.put(accessToken, new ArrayList<>());
-            }
-            groupMap.get(accessToken).add(fundTalkConf.getFundId());
-        }
-        for (String accessToken : groupMap.keySet()) {
-            List<Integer> fundIds = groupMap.get(accessToken);
+            String belongName = fundTalkConf.getBelongName();
+            BigDecimal totalAmount = fundMapper.totalAmount(belongName);
+            List<Fund > fundList = fundMapper.queryByBelongName(belongName);
             int up = 0, down = 0;
             BigDecimal earTotal = new BigDecimal("0");//总收益
             StringBuilder fundTipBuilder = new StringBuilder();
+            DingMarkDown dingMarkDown = new DingMarkDown("结算", "\n").lineBreak();
             BigDecimal calcTotal = new BigDecimal("0");//剩余金额
-            for (Integer fundId : fundIds) {
-                Fund fund = fundMapper.queryById(fundId);
-                if (fund.getEarAmount().doubleValue() > 0) {
-                    up++;
-                } else {
-                    down++;
+            for (Fund fund : fundList) {
+                if (fund.getState() == 1) {//待确认
+                    fundTipBuilder.append(buleDmk("[待确认]：" + fund.getFundName() + "(购入" + fund.getCalcAmount() + "元)")+ "\n\n");
+                    continue;
                 }
-                calcTotal = calcTotal.add(fund.getCalcAmount());
-                earTotal = earTotal.add(fund.getEarAmount());
-                String moneyStr = fund.getEarAmount().setScale(2, RoundingMode.HALF_DOWN).toString();
-                if (fund.getEarAmount().doubleValue() > 0) {
-                    moneyStr = "+" + moneyStr;
-                } else {
-                }
+                if(fund.getState() == 0){//正常交易
+                    if (fund.getGszzl() == null) continue;
+                    if (fund.getEarAmount().doubleValue() > 0) {
+                        up++;
+                    } else {
+                        down++;
+                    }
+                    calcTotal = calcTotal.add(fund.getCalcAmount());
+                    earTotal = earTotal.add(fund.getEarAmount());
+                    String moneyStr = fund.getEarAmount().setScale(2, RoundingMode.HALF_DOWN).toString();
+                    if (fund.getEarAmount().doubleValue() > 0) {
+                        moneyStr = "+" + moneyStr;
+                    } else {
+                    }
+                    String gzzlStr = fund.getGszzl().setScale(3, RoundingMode.HALF_DOWN).toString();
+                    if (fund.getGszzl().doubleValue() > 0) {
+                        gzzlStr = "+" + gzzlStr;
+                    }
+                    gzzlStr += "%";
 
-
-                String gzzlStr = fund.getGszzl().setScale(3, RoundingMode.HALF_DOWN).toString();
-                if (fund.getGszzl().doubleValue() > 0) {
-                    gzzlStr = "+" + gzzlStr;
+                    String content = String.format("[%s]：%s(%s元)", gzzlStr, fund.getFundName(), moneyStr);
+                    if (fund.getGszzl().doubleValue() > 0) {
+                        content = redDmk(content);
+                    } else {
+                        content = greeDmk(content);
+                    }
+                    fundTipBuilder.append(content + "\n\n");
                 }
-                gzzlStr += "%";
-                String content = String.format("[%s]：%s(%s元)", gzzlStr, fund.getFundName(), moneyStr);
-                fundTipBuilder.append(content + "\n");
             }
+
             BigDecimal earAmount = new BigDecimal("0");
             if (type == 1) {
-                redisLuaUtils.set(accessToken + ":erarToal", earTotal.setScale(2, RoundingMode.HALF_DOWN).toString(), 60 * 60 * 8);
+                redisLuaUtils.set(fundTalkConf.getAccessToken() + ":erarToal", earTotal.setScale(2, RoundingMode.HALF_DOWN).toString(), 60 * 60 * 8);
                 earAmount = earTotal.setScale(2, RoundingMode.HALF_DOWN);
+                totalAmount = totalAmount.add(earTotal);
             } else if (type == 2) {
-                String lastEar = redisLuaUtils.get(accessToken + ":erarToal");
+                String lastEar = redisLuaUtils.get(fundTalkConf.getAccessToken()  + ":erarToal");
                 if (StringUtils.isBlank(lastEar)) {
                     lastEar = "0";
                 }
@@ -244,31 +230,58 @@ public class FundTask {
             if (type == 2) {
                 dat = "下午";
             }
-            sendContent.append(sdf.format(new Date()) + " " + dat + "\n");
-            sendContent.append(dat + "收益：" + formatMoney(earAmount.setScale(2, RoundingMode.HALF_DOWN)) + "元\n");
-            sendContent.append("今天收益：" + formatMoney(earTotal.setScale(2, RoundingMode.HALF_DOWN)) + "元\n");
-            sendContent.append("金额剩余："+calcTotal.add(earTotal)+"元\n");
-            sendContent.append("涨:" + up + ",跌:" + down + "\n");
-            sendContent.append(fundTipBuilder.toString());
-            DingText dingText = new DingText(sendContent.toString());
-            dingText.setAtAll(true);
-            DingTalkSend dingTalkSend = new DingTalkSend(dingText);
-            dingTalkSend.setAccessToken(accessToken);
-            dingTalkSend.send();
+            dingMarkDown.h2(sdf.format(new Date()) + " " + dat).lineBreak();
+            String dear = dat + "收益：" + formatMoney(earAmount.setScale(2, RoundingMode.HALF_DOWN)) + "元";
+            String tear = "今天收益：" + formatMoney(earTotal.setScale(2, RoundingMode.HALF_DOWN)) + "元";
+            dingMarkDown.add(whichDmk(dear, earAmount.doubleValue())).lineBreak();
+            dingMarkDown.add(whichDmk(tear, earTotal.doubleValue())).lineBreak();
+            dingMarkDown.add("基金余额：" + totalAmount.setScale(2,RoundingMode.HALF_DOWN)+"元").lineBreak();
+            dingMarkDown.add("涨:" + up + ",跌:" + down).lineBreak();
+            dingMarkDown.add(fundTipBuilder.toString());
+            DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
+            dingTalkSend1.setAccessToken(fundTalkConf.getAccessToken());
+            dingTalkSend1.send();
         }
     }
 
-    private String formatMoney(BigDecimal money){
-        if(money.doubleValue()>=0){
-            return "+"+money.toString();
+    private String whichDmk(String content, double val) {
+        if (val > 0) {
+            return redDmk(content);
+        } else {
+            return greeDmk(content);
+        }
+    }
+
+    private static String buleDmk(String content) {
+        return "<font color=#003e9f  face=\"黑体\">" + content + "</font>";
+    }
+
+    private String redDmk(String content) {
+        return "<font color=#dc2626  face=\"黑体\">" + content + "</font>";
+    }
+
+    private String greeDmk(String content) {
+        return "<font color=#21960d  face=\"黑体\">" + content + "</font>";
+    }
+
+    private String formatMoney(BigDecimal money) {
+        if (money.doubleValue() >= 0) {
+            return "+" + money.toString();
         }
         return money.toString();
     }
+
     private void updateFundLog(FundStatModel statModel) {
-        FundLog fundLog = fundLogMapper.queryById(statModel.getFundId());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        FundLog fundLog = null;
+        try {
+            fundLog = fundLogMapper.queryByIdAndDate(statModel.getFundId(), sdf.parse(sdf.format(new Date())));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         if (fundLog == null) {
             fundLog = new FundLog();
-            fundLog.setCalcAmount(BigDecimal.valueOf(statModel.getCalcAmount()));
+            fundLog.setEarAmount((statModel.getEarAmount()));
             fundLog.setCalcDate(new Date());
             fundLog.setFundCode(statModel.getFundCode());
             fundLog.setFundId(statModel.getFundId());
@@ -276,7 +289,7 @@ public class FundTask {
             fundLogMapper.insert(fundLog);
         } else {
             fundLog.setFundCode(statModel.getFundCode());
-            fundLog.setCalcAmount(BigDecimal.valueOf(statModel.getCalcAmount()));
+            fundLog.setEarAmount(statModel.getEarAmount());
             fundLog.setCalcDate(new Date());
             fundLog.setFundId(statModel.getFundId());
             fundLog.setGszzl(statModel.getGszzl());
@@ -342,6 +355,16 @@ public class FundTask {
         private BigDecimal gszzl;
 
         private String belongName;
+
+        private BigDecimal earAmount;
+
+        public BigDecimal getEarAmount() {
+            return earAmount;
+        }
+
+        public void setEarAmount(BigDecimal earAmount) {
+            this.earAmount = earAmount;
+        }
 
         public Integer getFundId() {
             return fundId;

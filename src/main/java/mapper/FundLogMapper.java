@@ -4,6 +4,8 @@ import bean.Fund;
 import bean.FundLog;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
+
 /**
  * @Description:
  * @Author: lihaoming
@@ -12,6 +14,8 @@ import org.apache.ibatis.annotations.Param;
 public interface FundLogMapper {
 
     FundLog queryById(@Param(value = "fundId") Integer fundId);
+
+    FundLog queryByIdAndDate(@Param(value = "fundId") Integer fundId, @Param(value = "calcDate") Date calcDate);
 
     void insert(FundLog fundLog);
 

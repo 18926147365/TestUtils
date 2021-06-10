@@ -10,6 +10,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 
+import dingtalk.DingMarkDown;
 import dingtalk.DingTalkSend;
 import dingtalk.DingText;
 import io.netty.util.concurrent.ThreadPerTaskExecutor;
@@ -133,10 +134,51 @@ public class Test {
     }
 
     public static void main(String[] args) throws Exception {
-        ddasd();
+        DingMarkDown dingMarkDown = new DingMarkDown("交易完成", "\n").lineBreak();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String dat = "下午";
+        StringBuilder fundTipBuilder = new StringBuilder();
+        fundTipBuilder.append(buleDmk("\n\n[待确认]：招商国证生物医药指数(购入3000元)"));
+        fundTipBuilder.append(buleDmk("\n\n[待确认]：南方人工智能主题混合(购入5000元)"));
+        fundTipBuilder.append(buleDmk("\n\n[待确认]：国联安中证医药100指数A(购入4000元)"));
 
+        dingMarkDown.h2(sdf.format(new Date()) + " " + dat).lineBreak();
+        String dear = dat + "收益：0元";
+        String tear = "今天收益：0元";
+        dingMarkDown.add(whichDmk(dear,1)).lineBreak();
+        dingMarkDown.add(whichDmk(tear,1.3)).lineBreak();
+        dingMarkDown.add("基金余额： 20000元").lineBreak();
+        dingMarkDown.add("涨:" + 0 + ",跌:" + 0).lineBreak();
+        dingMarkDown.add(fundTipBuilder.toString());
+        DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
+        dingTalkSend1.setAccessToken("5a63c6b1edc33f2390fbd5e3e51ef20f33625ec052546fedb5041035a95db594");
+        dingTalkSend1.send();
+    }
+    private static String whichDmk(String content,double val){
+        if(val>0){
+            return redDmk(content);
+        }else{
+            return greeDmk(content);
+        }
     }
 
+    private  static String buleDmk (String content) {
+        return "<font color=#003e9f  face=\"黑体\">" + content + "</font>";
+    }
+    private  static String redDmk(String content) {
+        return "<font color=#dc2626  face=\"黑体\">" + content + "</font>";
+    }
+
+    private static String greeDmk(String content) {
+        return "<font color=#21960d  face=\"黑体\">" + content + "</font>";
+    }
+
+    private static String formatMoney(BigDecimal money) {
+        if (money.doubleValue() >= 0) {
+            return "+" + money.toString();
+        }
+        return money.toString();
+    }
     public static void ddasd(){
         String content ="2020-05-31 11:30:00\n下午收益:-133元\n今天收益:+421元\n涨:4支,跌:0支\n总金额:20421元\n";
         StringBuilder builder = new StringBuilder();
