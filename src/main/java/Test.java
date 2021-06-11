@@ -133,15 +133,48 @@ public class Test {
         }
     }
 
+
+    volatile   int d = 0;
+
+    private void write()   {
+        while (true){
+            if(d==1){
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        System.out.println("结束");
+    }
+    private void read(){
+        d=1;
+    }
+
+
     public static void main(String[] args) throws Exception {
 
-        Date date1 = new Date();
-        Thread.sleep(1000);
-        Date date2 = new Date();
-        System.out.println();
-        System.out.println(date2.getTime()-date1.getTime());
+        Test test = new Test();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                test.write();
+            }
+        }).start();
+        Thread.sleep(111);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                test.read();
+            }
+        }).start();
 
-        if(true){
+
+        CountDownLatch  count = new CountDownLatch(1);
+        count.await();
+        if (true) {
             return;
         }
         DingMarkDown dingMarkDown = new DingMarkDown("交易完成", "\n").lineBreak();
@@ -155,28 +188,30 @@ public class Test {
         dingMarkDown.h2(sdf.format(new Date()) + " " + dat).lineBreak();
         String dear = dat + "收益：0元";
         String tear = "今天收益：0元";
-        dingMarkDown.add(whichDmk(dear,1)).lineBreak();
-        dingMarkDown.add(whichDmk(tear,1.3)).lineBreak();
+        dingMarkDown.add(whichDmk(dear, 1)).lineBreak();
+        dingMarkDown.add(whichDmk(tear, 1.3)).lineBreak();
         dingMarkDown.add("基金余额： 20000元").lineBreak();
         dingMarkDown.add("涨:" + 0 + ",跌:" + 0).lineBreak();
         dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
-        dingMarkDown.line("点击查看基金全部详情","https://www.baidu.com");
+        dingMarkDown.line("点击查看基金全部详情", "https://www.baidu.com");
         DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
         dingTalkSend1.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
         dingTalkSend1.send();
     }
-    private static String whichDmk(String content,double val){
-        if(val>0){
+
+    private static String whichDmk(String content, double val) {
+        if (val > 0) {
             return redDmk(content);
-        }else{
+        } else {
             return greeDmk(content);
         }
     }
 
-    private  static String buleDmk (String content) {
+    private static String buleDmk(String content) {
         return "<font color=#003e9f  face=\"黑体\">" + content + "</font>";
     }
-    private  static String redDmk(String content) {
+
+    private static String redDmk(String content) {
         return "<font color=#dc2626  face=\"黑体\">" + content + "</font>";
     }
 
@@ -190,18 +225,20 @@ public class Test {
         }
         return money.toString();
     }
-    public static void ddasd(){
-        String content ="2020-05-31 11:30:00\n下午收益:-133元\n今天收益:+421元\n涨:4支,跌:0支\n总金额:20421元\n";
+
+    public static void ddasd() {
+        String content = "2020-05-31 11:30:00\n下午收益:-133元\n今天收益:+421元\n涨:4支,跌:0支\n总金额:20421元\n";
         StringBuilder builder = new StringBuilder();
         builder.append("[+").append("1.3%").append("]").append("天弘创业板ETF联接基金C").append("(+").append("31").append("元)\n");
         builder.append("[+").append("3.3%").append("]").append("中欧医疗健康混合C").append("(+").append("81").append("元)");
-        content +=builder.toString();
+        content += builder.toString();
         DingText dingText = new DingText(content);
         dingText.setAtAll(true);
         DingTalkSend dingTalkSend = new DingTalkSend(dingText);
         dingTalkSend.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
         dingTalkSend.send();
     }
+
     public int singleNumber(int[] nums) {
         int result = 0;
         for (int i = 0; i < nums.length; i++) {
