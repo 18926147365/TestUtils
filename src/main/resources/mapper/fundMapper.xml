@@ -32,23 +32,31 @@
     <update id="updateEarFund">
         update fund set ear_time=#{earTime},ear_amount=#{earAmount} where id = #{id}
     </update>
-    <select id="totalCaclAmount" resultType="java.math.BigDecimal" >
-        select SUM(calc_amount) from fund where id in
-        <foreach item="item" index="index" collection="ids" open="("  close=")" separator=",">
-            #{item}
-        </foreach>
+    <select id="totalCalcAmount" resultType="java.math.BigDecimal" >
+        SELECT SUM(calc_amount)-SUM(pay_amount) from fund where  belong_name = #{belongName} and state = 0 ;
     </select>
 
     <select id="totalAmount" resultType="java.math.BigDecimal" >
        select SUM(calc_amount) from fund where belong_name = #{belongName} and state in(0,1,-1);
     </select>
+    <select id="totalAwaitAmount" resultType="java.math.BigDecimal" >
+       select SUM(calc_amount) from fund where belong_name = #{belongName} and state in(1);
+    </select>
 
+    <select id="queryBalance" resultMap="BaseResultMap">
+        select * from fund where state = -1 and belong_name = #{belongName}
+    </select>
     <select id="totalEarAmount" resultType="java.math.BigDecimal" >
        select SUM(ear_amount) from fund where belong_name = #{belongName} and state = 0
     </select>
-
+    <select id="totalDealAmount" resultType="java.math.BigDecimal" >
+       select SUM(calc_amount) from fund where belong_name = #{belongName} and state = 0
+    </select>
     <select id="queryByBelongName" resultMap="BaseResultMap">
         select * from fund where belong_name = #{belongName};
+    </select>
+    <select id="todayEarAmount" resultType="java.math.BigDecimal" >
+        SELECT SUM(ear_amount) FROM fund WHERE state = 0 AND belong_name = #{belongName} AND ear_time > DATE_FORMAT(SYSDATE(), '%Y-%m-%d')
     </select>
 
 

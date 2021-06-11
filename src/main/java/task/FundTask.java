@@ -117,9 +117,9 @@ public class FundTask {
                 updateCalcAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
             }
         }
-
-
-        notifyTalk(type);
+        if(type==1 || type==2){
+            notifyTalk(type);
+        }
     }
 
 
@@ -162,12 +162,11 @@ public class FundTask {
     }
 
     public void notifyTalk(Integer type) {
-        if(!(type==1 || type==2)){
-            return;
-        }
+
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         List<FundTalkConf> talkConfList = fundTalkConfMapper.queryAll();
         Map<String, List<Integer>> groupMap = new HashMap<>();
+        BigDecimal allTotalAmount = new BigDecimal("0");
         for (FundTalkConf fundTalkConf : talkConfList) {
             String belongName = fundTalkConf.getBelongName();
             BigDecimal totalAmount = fundMapper.totalAmount(belongName);
@@ -233,6 +232,7 @@ public class FundTask {
             dingMarkDown.h2(sdf.format(new Date()) + " " + dat).lineBreak();
             String dear = dat + "收益：" + formatMoney(earAmount.setScale(2, RoundingMode.HALF_DOWN)) + "元";
             String tear = "今天收益：" + formatMoney(earTotal.setScale(2, RoundingMode.HALF_DOWN)) + "元";
+            allTotalAmount = allTotalAmount.add(earTotal);
             dingMarkDown.add(whichDmk(dear, earAmount.doubleValue())).lineBreak();
             dingMarkDown.add(whichDmk(tear, earTotal.doubleValue())).lineBreak();
             dingMarkDown.add("基金余额：" + totalAmount.setScale(2,RoundingMode.HALF_DOWN)+"元").lineBreak();
@@ -241,7 +241,16 @@ public class FundTask {
             DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
             dingTalkSend1.setAccessToken(fundTalkConf.getAccessToken());
             dingTalkSend1.send();
+
+
         }
+
+        DingText dingText = new DingText();
+        dingText.setContent("今天收益:"+formatMoney(allTotalAmount)+"元");
+        dingText.setAtAll(true);
+        DingTalkSend dingTalkSend2 = new DingTalkSend(dingText);
+        dingTalkSend2.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
+        dingTalkSend2.send();
     }
 
     private String whichDmk(String content, double val) {

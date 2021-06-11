@@ -134,6 +134,16 @@ public class Test {
     }
 
     public static void main(String[] args) throws Exception {
+
+        Date date1 = new Date();
+        Thread.sleep(1000);
+        Date date2 = new Date();
+        System.out.println();
+        System.out.println(date2.getTime()-date1.getTime());
+
+        if(true){
+            return;
+        }
         DingMarkDown dingMarkDown = new DingMarkDown("交易完成", "\n").lineBreak();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String dat = "下午";
@@ -149,9 +159,10 @@ public class Test {
         dingMarkDown.add(whichDmk(tear,1.3)).lineBreak();
         dingMarkDown.add("基金余额： 20000元").lineBreak();
         dingMarkDown.add("涨:" + 0 + ",跌:" + 0).lineBreak();
-        dingMarkDown.add(fundTipBuilder.toString());
+        dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
+        dingMarkDown.line("点击查看基金全部详情","https://www.baidu.com");
         DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
-        dingTalkSend1.setAccessToken("5a63c6b1edc33f2390fbd5e3e51ef20f33625ec052546fedb5041035a95db594");
+        dingTalkSend1.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
         dingTalkSend1.send();
     }
     private static String whichDmk(String content,double val){
