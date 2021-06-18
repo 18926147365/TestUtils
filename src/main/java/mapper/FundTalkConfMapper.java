@@ -1,6 +1,7 @@
 package mapper;
 
 import bean.FundTalkConf;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -12,4 +13,10 @@ import java.util.List;
 public interface FundTalkConfMapper {
 
     List<FundTalkConf> queryAll();
+
+    FundTalkConf queryByBeLongName(@Param(value = "belongName") String belongName);
+
+    FundTalkConf queryByBeLongId(@Param(value = "belongId") String belongId);
+
+
 }

@@ -31,4 +31,9 @@
         update fund_log set fund_id = #{fundId},fund_code = #{fundCode},calc_date = #{calcDate},
         gszzl = #{gszzl},ear_amount = #{earAmount},modify_time = sysdate() where id =#{id}
     </insert>
+
+
+    <select id="statisticsFund" resultType="FundStatistics">
+        SELECT SUM(fl.ear_amount) AS amount ,calc_date as calcDate FROM `fund_log` fl LEFT JOIN fund f ON fl.fund_id = f.id WHERE f.belong_name =#{belongName} GROUP BY calc_date limit 0,7
+    </select>
 </mapper>

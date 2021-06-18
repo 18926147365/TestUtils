@@ -12,7 +12,11 @@ import java.math.BigDecimal;
 @Data
 public class FundUserResp {
 
+    private String userName; //用户名
+
     private BigDecimal totalAmount;//当前余额
+
+    private BigDecimal capitalAmount;//本金
 
     private BigDecimal totalCalcAmount;//总收益
 

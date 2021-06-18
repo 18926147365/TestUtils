@@ -1,16 +1,23 @@
 package controller;
 
 import bean.Fund;
+import bean.FundStatistics;
+import bean.FundTalkConf;
+import bean.resp.FundRealResp;
 import bean.resp.FundResp;
 import bean.resp.FundUserResp;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import mapper.FundLogMapper;
 import mapper.FundMapper;
+import mapper.FundTalkConfMapper;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import task.FundTask;
+import utils.RedisLuaUtils;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -37,8 +44,17 @@ public class FundController {
     @Autowired
     private FundMapper fundMapper;
 
+    @Autowired
+    private FundTalkConfMapper fundTalkConfMapper;
+    @Autowired
+    private FundLogMapper fundLogMapper;
+    @Autowired
+    private RedisLuaUtils redisLuaUtils;
     @RequestMapping("getFundList")
-    public List<FundResp> getFundList(String belongName) throws Exception {
+    public List<FundResp> getFundList(String belongId) throws Exception {
+
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        String belongName = fundTalkConf.getBelongName();
         this.reloadFund();
         List<FundResp> resultList = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -68,7 +84,9 @@ public class FundController {
     }
 
     @RequestMapping("/getFundUser")
-    public FundUserResp getFundUser(String belongName) throws IOException, ParseException {
+    public FundUserResp getFundUser(String belongId) throws IOException, ParseException {
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        String belongName = fundTalkConf.getBelongName();
         this.reloadFund();
         BigDecimal totalAmount = fundMapper.totalAmount(belongName);//总余额
         BigDecimal totalCalcAMount = fundMapper.totalCalcAmount(belongName);//总收益
@@ -76,7 +94,19 @@ public class FundController {
         BigDecimal awaitAmount = fundMapper.totalAwaitAmount(belongName);//待确认购入的金额
         Fund balanceFund = fundMapper.queryBalance(belongName);//未购买基金的金额
         BigDecimal todayEarAmount = fundMapper.todayEarAmount(belongName);//当天收益
+
+        if (awaitAmount == null) {
+            awaitAmount = new BigDecimal("0");
+        }
+        if (totalCalcAMount == null) {
+            totalCalcAMount = new BigDecimal("0");
+        }
+        if (todayEarAmount == null) {
+            todayEarAmount = new BigDecimal("0");
+        }
         FundUserResp fundUserResp = new FundUserResp();
+        fundUserResp.setUserName(belongName);
+        fundUserResp.setCapitalAmount(fundTalkConf.getAmount());//本金
         fundUserResp.setTotalAmount(totalAmount);
         fundUserResp.setBalanceAmount(balanceFund.getPayAmount());
         fundUserResp.setDealAmount(dealAmount);
@@ -86,11 +116,53 @@ public class FundController {
         return fundUserResp;
     }
 
+    @RequestMapping("/queryRealFundList")
+    public FundRealResp queryRealFundList(String belongId) {
+
+        this.reloadFund();
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        String belongName = fundTalkConf.getBelongName();
+        List<Fund> fundList = fundMapper.queryByBelongName(belongName);
+        BigDecimal todayEarAmount = fundMapper.todayEarAmount(belongName);
+        FundRealResp realResp = new FundRealResp();
+        realResp.setTodayAmount(todayEarAmount);
+        if(todayEarAmount == null){
+            return realResp;
+        }
+
+        realResp.setFundList(fundList);
+        int upT = 0;
+        int downT = 0;
+        for (Fund fund : fundList) {
+            if (fund.getState() == 0) {
+                if (fund.getEarAmount() != null) {
+                    if (fund.getEarAmount().doubleValue() > 0) {
+                        upT++;
+                    } else if (fund.getEarAmount().doubleValue() < 0) {
+                        downT++;
+                    }
+                }
+            }
+        }
+        realResp.setUpT(upT);
+        realResp.setDownT(downT);
+        return realResp;
+    }
+
+    @RequestMapping("/statisticsFundList")
+    public List<FundStatistics> statisticsFundList (String belongId){
+        this.reloadFund();
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        List<FundStatistics> list = fundLogMapper.statisticsFund(fundTalkConf.getBelongName());
+        return list;
+    }
+
+
     static volatile Date lastUploadDate = new Date();
 
     private synchronized void reloadFund() {
         try {
-            if (new Date().getTime() - lastUploadDate.getTime() > 30 * 1000) {
+            if (new Date().getTime() - lastUploadDate.getTime() > 6000 * 1000) {
                 lastUploadDate = new Date();
                 fundTask.execute(-1);
             }

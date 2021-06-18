@@ -2,9 +2,11 @@ package mapper;
 
 import bean.Fund;
 import bean.FundLog;
+import bean.FundStatistics;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * @Description:
@@ -21,5 +23,7 @@ public interface FundLogMapper {
 
     void update(FundLog fundLog);
 
+
+    List<FundStatistics> statisticsFund(@Param(value = "belongName") String belongName);
 
 }

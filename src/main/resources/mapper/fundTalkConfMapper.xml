@@ -6,7 +6,9 @@
         <result column="id" property="id"></result>
         <result column="access_token" property="accessToken"></result>
         <result column="belong_name" property="belongName"></result>
+        <result column="belong_id" property="belongId"></result>
         <result column="state" property="state"></result>
+        <result column="amount" property="amount"></result>
         <result column="create_time" property="createTime"></result>
 
     </resultMap>
@@ -15,4 +17,13 @@
     <select id="queryAll" resultMap="BaseResultMap">
         select * from fund_talk_conf where state = 0
     </select>
+    <select id="queryByBeLongName" resultMap="BaseResultMap">
+        select * from fund_talk_conf where belong_name = #{belongName};
+    </select>
+
+    <select id="queryByBeLongId" resultMap="BaseResultMap">
+        select * from fund_talk_conf where belong_id = #{belongId};
+    </select>
+
+
 </mapper>

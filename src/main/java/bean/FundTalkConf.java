@@ -2,6 +2,7 @@ package bean;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -16,9 +17,13 @@ public class FundTalkConf {
 
     private String belongName ;
 
+    private String belongId;
+
     private String accessToken;
 
     private Integer state;
+
+    private BigDecimal amount;
 
     private Date createTime;
 }

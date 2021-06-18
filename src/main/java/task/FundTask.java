@@ -213,7 +213,7 @@ public class FundTask {
 
             BigDecimal earAmount = new BigDecimal("0");
             if (type == 1) {
-                redisLuaUtils.set(fundTalkConf.getAccessToken() + ":erarToal", earTotal.setScale(2, RoundingMode.HALF_DOWN).toString(), 60 * 60 * 8);
+                redisLuaUtils.set(fundTalkConf.getAccessToken() + ":erarToal", earTotal.setScale(2, RoundingMode.HALF_DOWN).toString(), 60 * 60 * 13);
                 earAmount = earTotal.setScale(2, RoundingMode.HALF_DOWN);
                 totalAmount = totalAmount.add(earTotal);
             } else if (type == 2) {
