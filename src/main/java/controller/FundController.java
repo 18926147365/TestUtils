@@ -162,7 +162,7 @@ public class FundController {
 
     private synchronized void reloadFund() {
         try {
-            if (new Date().getTime() - lastUploadDate.getTime() > 6000 * 1000) {
+            if (new Date().getTime() - lastUploadDate.getTime() >1000 * 60) {
                 lastUploadDate = new Date();
                 fundTask.execute(-1);
             }
