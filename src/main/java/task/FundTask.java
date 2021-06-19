@@ -229,17 +229,22 @@ public class FundTask {
             if (type == 2) {
                 dat = "下午";
             }
-            dingMarkDown.h2(sdf.format(new Date()) + " " + dat).lineBreak();
+            dingMarkDown.h2(sdf.format(new Date()) + " " + dat ).lineBreak();
+
             String dear = dat + "收益：" + formatMoney(earAmount.setScale(2, RoundingMode.HALF_DOWN)) + "元";
             String tear = "今天收益：" + formatMoney(earTotal.setScale(2, RoundingMode.HALF_DOWN)) + "元";
             allTotalAmount = allTotalAmount.add(earTotal);
+            dingMarkDown.add("持有者：" + fundTalkConf.getBelongName()).lineBreak();
             dingMarkDown.add(whichDmk(dear, earAmount.doubleValue())).lineBreak();
             dingMarkDown.add(whichDmk(tear, earTotal.doubleValue())).lineBreak();
             dingMarkDown.add("基金余额：" + totalAmount.setScale(2,RoundingMode.HALF_DOWN)+"元").lineBreak();
             dingMarkDown.add("涨:" + up + ",跌:" + down).lineBreak();
-            dingMarkDown.add(fundTipBuilder.toString());
+            dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
+            dingMarkDown.line("点击查看更多基金信息","http://42.194.205.61:8082/#/home/"+fundTalkConf.getBelongId());
+
             DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
             dingTalkSend1.setAccessToken(fundTalkConf.getAccessToken());
+
             dingTalkSend1.send();
 
 

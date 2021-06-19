@@ -565,8 +565,9 @@ public class TestController {
 
     @RequestMapping("/test114")
     public void test114(int i) {
-        String path = "/Users/lihaoming/Desktop/demo.xlsx";
-        EasyExcel.read(path, DemoData.class, new DemoDataListener(userMapper)).sheet().doRead();
+
+        fundTask.notifyTalk(2);
+
     }
 
     @RequestMapping("/ccc")
