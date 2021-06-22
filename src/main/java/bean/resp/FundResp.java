@@ -22,6 +22,18 @@ public class FundResp extends Fund {
 
     private String payTimeStr;
 
+    private String gztimeStr;
+
+    public String getGztimeStr() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日");
+        if(getGztime() !=null){
+            return sdf.format(getGztime());
+        }
+        return gztimeStr;
+    }
+
+
+
     public String getPayTimeStr() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日");
         if(getPayTime() !=null){

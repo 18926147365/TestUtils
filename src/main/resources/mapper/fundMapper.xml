@@ -7,6 +7,7 @@
         <result column="fund_code" property="fundCode"></result>
         <result column="fund_name" property="fundName"></result>
         <result column="state" property="state"></result>
+        <result column="confirm_time" property="confirmTime"></result>
         <result column="pay_amount" property="payAmount"></result>
         <result column="pay_time" property="payTime"></result>
         <result column="calc_amount" property="calcAmount"></result>

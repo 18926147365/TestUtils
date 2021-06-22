@@ -154,26 +154,46 @@ public class Test {
     }
 
 
+
+    public static void aa() throws Exception{
+        String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/001550.js");
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("js");
+        try {
+            engine.eval(result);
+        } catch (ScriptException e) {
+            e.printStackTrace();
+        }
+        ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        BigDecimal calcTemp = new BigDecimal("0");
+        double total = 2000;
+        for (String s : scriptObjectMirror.keySet()) {
+            ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
+            Double datetime = (Double) mirror.get("x");
+            Object obj = mirror.get("equityReturn");
+            Double equityReturn = new Double("0");
+            if (obj instanceof Integer) {
+                equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
+            } else if (obj instanceof Double) {
+                equityReturn = (Double) obj;
+            }
+            if(1623772800000l<=new Date(datetime.longValue()).getTime()){
+                double d = total * equityReturn*0.01;
+                total = total + d;
+                System.out.println(sdf.format(new Date(datetime.longValue()))+">>"+equityReturn+">>"+d+">>"+total);
+            }
+        }
+
+
+    }
     public static void main(String[] args) throws Exception {
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println(sdf1.parse("2021-06-16 00:00:00").getTime());
+//        1623772800000l
+//        aa();
 
-        Test test = new Test();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                test.write();
-            }
-        }).start();
-        Thread.sleep(111);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                test.read();
-            }
-        }).start();
-
-
-        CountDownLatch  count = new CountDownLatch(1);
-        count.await();
         if (true) {
             return;
         }

@@ -65,7 +65,33 @@ public class FundTask {
     @Autowired
     private FundTalkConfMapper fundTalkConfMapper;
 
-    @Scheduled(cron = "0 32 11 * * ?")
+
+    @Scheduled(cron = "0 0/5 * * * ?")
+    public void updateTask() {
+        try {
+            Date startDate = new Date();
+            startDate.setHours(9);
+            startDate.setSeconds(0);
+            startDate.setMinutes(0);
+            Date endDate = new Date();
+            endDate.setHours(15);
+            endDate.setSeconds(0);
+            endDate.setMinutes(30);
+            Date nowDate = new Date();
+            if (startDate.getTime() < nowDate.getTime() &&
+                    endDate.getTime() > nowDate.getTime()) {
+                log.info("定时任务更新基金开始--------");
+                this.execute(-1);
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Scheduled(cron = "0 36 11 * * ?")
     public void runTask1() {
         try {
             execute(1);
@@ -74,7 +100,7 @@ public class FundTask {
         }
     }
 
-    @Scheduled(cron = "0 03 15 * * ?")
+    @Scheduled(cron = "0 06 15 * * ?")
     public void runTask2() {
         try {
             execute(2);
@@ -117,7 +143,7 @@ public class FundTask {
                 updateCalcAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
             }
         }
-        if(type==1 || type==2){
+        if (type == 1 || type == 2) {
             notifyTalk(type);
         }
     }
@@ -170,7 +196,7 @@ public class FundTask {
         for (FundTalkConf fundTalkConf : talkConfList) {
             String belongName = fundTalkConf.getBelongName();
             BigDecimal totalAmount = fundMapper.totalAmount(belongName);
-            List<Fund > fundList = fundMapper.queryByBelongName(belongName);
+            List<Fund> fundList = fundMapper.queryByBelongName(belongName);
             int up = 0, down = 0;
             BigDecimal earTotal = new BigDecimal("0");//总收益
             StringBuilder fundTipBuilder = new StringBuilder();
@@ -178,10 +204,10 @@ public class FundTask {
             BigDecimal calcTotal = new BigDecimal("0");//剩余金额
             for (Fund fund : fundList) {
                 if (fund.getState() == 1) {//待确认
-                    fundTipBuilder.append(buleDmk("[待确认]：" + fund.getFundName() + "(购入" + fund.getCalcAmount() + "元)")+ "\n\n");
+                    fundTipBuilder.append(buleDmk("[待确认]：" + fund.getFundName() + "(购入" + fund.getCalcAmount() + "元)") + "\n\n");
                     continue;
                 }
-                if(fund.getState() == 0){//正常交易
+                if (fund.getState() == 0) {//正常交易
                     if (fund.getGszzl() == null) continue;
                     if (fund.getEarAmount().doubleValue() > 0) {
                         up++;
@@ -217,7 +243,7 @@ public class FundTask {
                 earAmount = earTotal.setScale(2, RoundingMode.HALF_DOWN);
                 totalAmount = totalAmount.add(earTotal);
             } else if (type == 2) {
-                String lastEar = redisLuaUtils.get(fundTalkConf.getAccessToken()  + ":erarToal");
+                String lastEar = redisLuaUtils.get(fundTalkConf.getAccessToken() + ":erarToal");
                 if (StringUtils.isBlank(lastEar)) {
                     lastEar = "0";
                 }
@@ -229,7 +255,7 @@ public class FundTask {
             if (type == 2) {
                 dat = "下午";
             }
-            dingMarkDown.h2(sdf.format(new Date()) + " " + dat ).lineBreak();
+            dingMarkDown.h2(sdf.format(new Date()) + " " + dat).lineBreak();
 
             String dear = dat + "收益：" + formatMoney(earAmount.setScale(2, RoundingMode.HALF_DOWN)) + "元";
             String tear = "今天收益：" + formatMoney(earTotal.setScale(2, RoundingMode.HALF_DOWN)) + "元";
@@ -237,10 +263,10 @@ public class FundTask {
             dingMarkDown.add("持有者：" + fundTalkConf.getBelongName()).lineBreak();
             dingMarkDown.add(whichDmk(dear, earAmount.doubleValue())).lineBreak();
             dingMarkDown.add(whichDmk(tear, earTotal.doubleValue())).lineBreak();
-            dingMarkDown.add("基金余额：" + totalAmount.setScale(2,RoundingMode.HALF_DOWN)+"元").lineBreak();
+            dingMarkDown.add("基金余额：" + totalAmount.setScale(2, RoundingMode.HALF_DOWN) + "元").lineBreak();
             dingMarkDown.add("涨:" + up + ",跌:" + down).lineBreak();
             dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
-            dingMarkDown.line("点击查看更多基金信息","http://42.194.205.61:8082/#/home/"+fundTalkConf.getBelongId());
+            dingMarkDown.line("点击查看更多基金信息", "http://42.194.205.61:8082/#/home/" + fundTalkConf.getBelongId());
 
             DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
             dingTalkSend1.setAccessToken(fundTalkConf.getAccessToken());
@@ -251,7 +277,7 @@ public class FundTask {
         }
 
         DingText dingText = new DingText();
-        dingText.setContent("今天收益:"+formatMoney(allTotalAmount)+"元");
+        dingText.setContent("今天收益:" + formatMoney(allTotalAmount) + "元");
         dingText.setAtAll(true);
         DingTalkSend dingTalkSend2 = new DingTalkSend(dingText);
         dingTalkSend2.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");

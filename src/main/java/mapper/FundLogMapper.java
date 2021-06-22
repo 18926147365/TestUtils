@@ -15,7 +15,11 @@ import java.util.List;
  */
 public interface FundLogMapper {
 
+
     FundLog queryById(@Param(value = "fundId") Integer fundId);
+
+    List<FundLog> queryList(@Param(value = "fundId") Integer fundId);
+
 
     FundLog queryByIdAndDate(@Param(value = "fundId") Integer fundId, @Param(value = "calcDate") Date calcDate);
 
@@ -23,6 +27,7 @@ public interface FundLogMapper {
 
     void update(FundLog fundLog);
 
+    void delete(@Param(value = "fundId") Integer fundId);
 
     List<FundStatistics> statisticsFund(@Param(value = "belongName") String belongName);
 

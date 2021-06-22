@@ -18,6 +18,12 @@
     <select id="queryById" resultMap="BaseResultMap">
         select * from fund_log where fund_id = #{fundId}
     </select>
+
+    <select id="queryList" resultMap="BaseResultMap">
+        select * from fund_log where fund_id = #{fundId}
+    </select>
+
+
     <select id="queryByIdAndDate" resultMap="BaseResultMap">
         select * from fund_log where fund_id = #{fundId} and calc_date=#{calcDate}
     </select>
@@ -31,9 +37,13 @@
         update fund_log set fund_id = #{fundId},fund_code = #{fundCode},calc_date = #{calcDate},
         gszzl = #{gszzl},ear_amount = #{earAmount},modify_time = sysdate() where id =#{id}
     </insert>
+    <delete id="delete">
+    DELETE FROM `fund_log` WHERE fund_id = #{fundId}
 
+</delete>
 
     <select id="statisticsFund" resultType="FundStatistics">
-        SELECT SUM(fl.ear_amount) AS amount ,calc_date as calcDate FROM `fund_log` fl LEFT JOIN fund f ON fl.fund_id = f.id WHERE f.belong_name =#{belongName} GROUP BY calc_date limit 0,7
+SELECT SUM(fl.ear_amount) AS amount ,calc_date as calcDate FROM `fund_log` fl LEFT JOIN fund f
+ON fl.fund_id = f.id WHERE f.belong_name =#{belongName} GROUP BY calc_date ORDER BY calc_date DESC LIMIT 0,30
     </select>
 </mapper>

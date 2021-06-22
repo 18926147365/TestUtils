@@ -28,6 +28,8 @@ public class Fund {
     private Date gztime;
 
     private BigDecimal gszzl;
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
+    private Date confirmTime;
 
     private BigDecimal payAmount;
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
