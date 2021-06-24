@@ -1,4 +1,4 @@
-package bean;
+package bean.resp;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -12,20 +12,18 @@ import java.util.Date;
  * @Date: 2021/5/31 上午9:12
  */
 @Data
-public class FundLog {
-    private Integer id;
-
-    private Integer fundId;
-
-    private String fundCode;
+public class FundLogResp {
 
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     private Date calcDate;
 
     private BigDecimal gszzl;
 
+    private BigDecimal totalAmount;
+
     private BigDecimal earAmount;
 
-    private Date modifyTime;
+
+
 
 }

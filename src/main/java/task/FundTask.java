@@ -266,7 +266,7 @@ public class FundTask {
             dingMarkDown.add("基金余额：" + totalAmount.setScale(2, RoundingMode.HALF_DOWN) + "元").lineBreak();
             dingMarkDown.add("涨:" + up + ",跌:" + down).lineBreak();
             dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
-            dingMarkDown.line("点击查看更多基金信息", "http://42.194.205.61:8082/#/home/" + fundTalkConf.getBelongId());
+            dingMarkDown.line("点击查看更多基金信息", "http://42.194.205.61:8082/#/fund/" + fundTalkConf.getBelongId());
 
             DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
             dingTalkSend1.setAccessToken(fundTalkConf.getAccessToken());

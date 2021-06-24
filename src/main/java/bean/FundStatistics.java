@@ -17,4 +17,6 @@ public class FundStatistics {
     private BigDecimal amount;
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     private Date calcDate;
+
+    private String weekDay;
 }

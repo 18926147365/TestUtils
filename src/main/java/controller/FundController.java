@@ -4,9 +4,7 @@ import bean.Fund;
 import bean.FundLog;
 import bean.FundStatistics;
 import bean.FundTalkConf;
-import bean.resp.FundRealResp;
-import bean.resp.FundResp;
-import bean.resp.FundUserResp;
+import bean.resp.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
@@ -30,10 +28,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -163,12 +158,56 @@ public class FundController {
     public List<FundStatistics> statisticsFundList(String belongId) {
         FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
         List<FundStatistics> list = fundLogMapper.statisticsFund(fundTalkConf.getBelongName());
+        for (FundStatistics fundStatistics : list) {
+            fundStatistics.setWeekDay(getWeek(fundStatistics.getCalcDate()));
+        }
         return list;
     }
 
 
-    static volatile Date lastUploadDate = new Date();
+    @RequestMapping("/queryFundLogDetail")
+    public FundDetailResp queryFundLogDetail(Integer fundId){
+        List<FundLog> loglist = fundLogMapper.queryList(fundId);
+        Fund fund = fundMapper.queryById(fundId);
+        BigDecimal totalAmount = new BigDecimal("0") ;
+        List<FundLogResp> fundLogList = new ArrayList<>();
+        for (FundLog fundLog : loglist) {
+            FundLogResp resp = new FundLogResp();
+            resp.setGszzl(fundLog.getGszzl());
+            resp.setEarAmount(fundLog.getEarAmount());
+            resp.setCalcDate(fundLog.getCalcDate());
+            totalAmount = totalAmount.add(fundLog.getEarAmount());
+            resp.setTotalAmount(totalAmount);
+            fundLogList.add(resp);
+        }
+        FundDetailResp result = new FundDetailResp();
+        result.setFund(fund);
+        result.setFundLogList(fundLogList);
+        return result;
+    }
 
+    private String getWeek(Date today) {
+        String week = "";
+        Calendar c = Calendar.getInstance();
+        c.setTime(today);
+        int weekday = c.get(Calendar.DAY_OF_WEEK);
+        if (weekday == 1) {
+            week = "星期日";
+        } else if (weekday == 2) {
+            week = "星期一";
+        } else if (weekday == 3) {
+            week = "星期二";
+        } else if (weekday == 4) {
+            week = "星期三";
+        } else if (weekday == 5) {
+            week = "星期四";
+        } else if (weekday == 6) {
+            week = "星期五";
+        } else if (weekday == 7) {
+            week = "星期六";
+        }
+        return week;
+    }
     private synchronized void reloadFund() {
 //        try {
 //            if (new Date().getTime() - lastUploadDate.getTime() >1000 * 60) {
@@ -181,6 +220,7 @@ public class FundController {
 //            e.printStackTrace();
 //        }
     }
+
 
     @RequestMapping("/clear2")
     public String clearing1(String belongName) throws Exception {

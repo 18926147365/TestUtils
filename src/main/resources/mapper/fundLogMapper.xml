@@ -20,7 +20,7 @@
     </select>
 
     <select id="queryList" resultMap="BaseResultMap">
-        select * from fund_log where fund_id = #{fundId}
+        select * from fund_log where fund_id = #{fundId} order by calc_date
     </select>
 
 
