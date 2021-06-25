@@ -179,32 +179,14 @@ public class Test {
             } else if (obj instanceof Double) {
                 equityReturn = (Double) obj;
             }
-            if (1623772800000l <= new Date(datetime.longValue()).getTime()) {
-                double d = total * equityReturn * 0.01;
-                total = total + d;
-                System.out.println(sdf.format(new Date(datetime.longValue())) + ">>" + equityReturn + ">>" + d + ">>" + total);
-            }
+            System.out.println(sdf.format(new Date(datetime.longValue())) + ">>" + equityReturn);
         }
 
 
     }
 
     public static void main(String[] args) throws Exception {
-        List<Integer> list = new ArrayList<>();
-        for (int i = 0; i < 9; i++) {
-            list.add(i);
-        }
-        List<Integer> temp = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            temp.add(i);
-            if (temp.size() < 10 && i != list.size() - 1) {
-                continue;
-            }
-            System.out.println(temp);
-            temp.clear();
-
-        }
-
+        aa();
         if (true) {
             return;
         }

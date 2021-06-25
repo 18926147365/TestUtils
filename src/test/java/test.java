@@ -11,6 +11,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.NotFoundException;
+import mapper.FundTodayLogMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.checkerframework.checker.units.qual.C;
@@ -67,9 +68,7 @@ public class test {
 
     @Test
     public void clients() throws InterruptedException {
-        String key="lotterycount1";
-        int prizeCount=100;//奖品总数
-        redisLuaUtils.set(key,prizeCount+"");
+
     }
 
     @Test

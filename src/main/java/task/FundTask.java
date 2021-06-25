@@ -9,10 +9,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
-import mapper.FundLogMapper;
-import mapper.FundMapper;
-import mapper.FundTalkConfMapper;
-import mapper.FundTodayLogMapper;
+import mapper.*;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
@@ -65,6 +62,8 @@ public class FundTask {
 
     @Autowired
     private FundTodayLogMapper fundTodayLogMapper;
+    @Autowired
+    private FundDayLogMapper fundDayLogMapper;
 
     @Scheduled(cron = "0 0/5 * * * ?")
     public void updateTask() {
@@ -141,7 +140,10 @@ public class FundTask {
                 fundMapper.updateFund(fund.getId(), fundJson.getBigDecimal("gszzl"), (fundJson.getDate("gztime")));
                 updateEarAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
                 updateCalcAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
-                updateFundLogToday(fundCode,fundJson.getDate("gztime"),fundJson.getBigDecimal("gszzl"));
+                updateFundLogToday(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
+                if (type == 2) {
+                    updateFundLogDay(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
+                }
             }
         }
         if (type == 1 || type == 2) {
@@ -149,13 +151,20 @@ public class FundTask {
         }
     }
 
-    private void updateFundLogToday(String fundCode,Date gztime,BigDecimal gszzl){
+    private void updateFundLogToday(String fundCode, Date gztime, BigDecimal gszzl) {
         FundTodayLog todayLog = new FundTodayLog();
         todayLog.setGszzl(gszzl);
         todayLog.setFundCode(fundCode);
         todayLog.setGztime(gztime);
         fundTodayLogMapper.insert(todayLog);
+    }
 
+    private void updateFundLogDay(String fundCode, Date gztime, BigDecimal gszzl) {
+        FundDayLog dayLog = new FundDayLog();
+        dayLog.setGszzl(gszzl);
+        dayLog.setFundCode(fundCode);
+        dayLog.setGztime(gztime);
+        fundDayLogMapper.insert(dayLog);
     }
 
     private void updateEarAmount(Fund fund, Date gztime, BigDecimal gszzl) {
