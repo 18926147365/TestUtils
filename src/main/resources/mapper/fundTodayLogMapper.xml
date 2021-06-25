@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.FundTodayLogMapper">
+    <resultMap id="BaseResultMap" type="bean.FundTodayLog">
+        <result column="gztime" property="gztime"></result>
+        <result column="id" property="id"></result>
+        <result column="fund_code" property="fundCode"></result>
+        <result column="gszzl" property="gszzl"></result>
+
+    </resultMap>
+
+    <select id="queryByFundCodeToday" resultMap="BaseResultMap">
+        select * from fund_today_log where fund_code = #{fundCode} and DATE_FORMAT(gztime, '%Y-%m-%d') = DATE_FORMAT(SYSDATE(), '%Y-%m-%d') order by gztime asc
+    </select>
+
+    <select id="queryByFundCodeAndGztime" resultMap="BaseResultMap">
+        select * from fund_today_log where fund_code = #{fundCode} and gztime = #{gztime}
+    </select>
+
+    <insert id="insert" parameterType="FundTodayLog">
+        INSERT INTO `fund_today_log` (fund_code,gszzl,gztime)
+        SELECT #{fundCode},#{gszzl},#{gztime}
+        FROM DUAL
+        WHERE NOT EXISTS(
+        (SELECT *
+        FROM fund_today_log
+        WHERE fund_code  = #{fundCode} and gztime=#{gztime})
+        ) ;
+    </insert>
+
+</mapper>

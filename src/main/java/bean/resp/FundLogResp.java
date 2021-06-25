@@ -14,7 +14,7 @@ import java.util.Date;
 @Data
 public class FundLogResp {
 
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date calcDate;
 
     private BigDecimal gszzl;

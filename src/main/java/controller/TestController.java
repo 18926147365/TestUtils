@@ -1,9 +1,6 @@
 package controller;
 
-import bean.BigModel;
-import bean.Fund;
-import bean.User;
-import bean.UserInfo;
+import bean.*;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -18,6 +15,7 @@ import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import mapper.FundMapper;
+import mapper.FundTodayLogMapper;
 import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.omg.PortableServer.POA;
@@ -55,6 +53,8 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author 李浩铭
@@ -563,10 +563,33 @@ public class TestController {
 
     Object object = new Object();
 
+    @Autowired
+    private FundTodayLogMapper fundTodayLogMapper;
     @RequestMapping("/test114")
-    public void test114(int i) {
-
-        fundTask.notifyTalk(2);
+    public void test114(int i) throws Exception {
+//        InputStreamReader inputStreamReader = new InputStreamReader(new FileInputStream(new File("/Users/lihaoming/Desktop/1.d")),"UTF-8");
+//        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+//        String content = null;
+//        StringBuilder sd = new StringBuilder();
+//        while ((content = bufferedReader.readLine()) !=null){
+//            sd.append(content);
+//        }
+//        String patterStr = "(数据更新:\\{)(.+?)(\\})";
+//        Matcher matcher = Pattern.compile(patterStr).matcher(sd);
+//        while (matcher.find()) {
+//            String json = "{"+matcher.group(2)+"}";
+//            JSONObject dd = JSONObject.parseObject(json);
+//            FundTodayLog log1 = new FundTodayLog();
+//            log1.setFundCode("008888");
+//            log1.setGztime(dd.getDate("gztime"));
+//            log1.setGszzl(dd.getBigDecimal("gszzl"));
+//            fundTodayLogMapper.insert(log1);
+//
+//        }
+        List<FundTodayLog> logList = fundTodayLogMapper.queryByFundCodeToday("008888");
+        for (FundTodayLog fundTodayLog : logList) {
+            System.out.println(fundTodayLog);
+        }
 
     }
 
@@ -579,7 +602,5 @@ public class TestController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
 }

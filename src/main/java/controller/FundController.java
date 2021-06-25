@@ -1,9 +1,6 @@
 package controller;
 
-import bean.Fund;
-import bean.FundLog;
-import bean.FundStatistics;
-import bean.FundTalkConf;
+import bean.*;
 import bean.resp.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -12,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import mapper.FundLogMapper;
 import mapper.FundMapper;
 import mapper.FundTalkConfMapper;
+import mapper.FundTodayLogMapper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -53,6 +51,8 @@ public class FundController {
     private FundLogMapper fundLogMapper;
     @Autowired
     private RedisLuaUtils redisLuaUtils;
+    @Autowired
+    private FundTodayLogMapper fundTodayLogMapper;
 
     @RequestMapping("getFundList")
     public List<FundResp> getFundList(String belongId) throws Exception {
@@ -89,7 +89,7 @@ public class FundController {
 
     @RequestMapping("/getFundUser")
     public FundUserResp getFundUser(String belongId) throws IOException, ParseException {
-        log.info("查询用户余额 belongId:"+belongId);
+        log.info("查询用户余额 belongId:" + belongId);
         FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
         String belongName = fundTalkConf.getBelongName();
         this.reloadFund();
@@ -166,10 +166,10 @@ public class FundController {
 
 
     @RequestMapping("/queryFundLogDetail")
-    public FundDetailResp queryFundLogDetail(Integer fundId){
-        List<FundLog> loglist = fundLogMapper.queryList(fundId);
+    public FundDetailResp queryFundLogDetail(Integer fundId) {
         Fund fund = fundMapper.queryById(fundId);
-        BigDecimal totalAmount = new BigDecimal("0") ;
+        List<FundLog> loglist = fundLogMapper.queryList(fundId);
+        BigDecimal totalAmount = new BigDecimal("0");
         List<FundLogResp> fundLogList = new ArrayList<>();
         for (FundLog fundLog : loglist) {
             FundLogResp resp = new FundLogResp();
@@ -185,6 +185,30 @@ public class FundController {
         result.setFundLogList(fundLogList);
         return result;
     }
+
+    @RequestMapping("/queryFundLogDetailToday")
+    public FundDetailResp queryFundLogDetailToday(Integer fundId) {
+        Fund fund = fundMapper.queryById(fundId);
+        List<FundLogResp> fundLogList = new ArrayList<>();
+        List<FundTodayLog> list = fundTodayLogMapper.queryByFundCodeToday(fund.getFundCode());
+        for (int i = 0; i < list.size(); i++) {
+            if (i % 2 != 0 && i != list.size() - 1) {
+                continue;
+            }
+            FundTodayLog fundTodayLog = list.get(i);
+            FundLogResp resp = new FundLogResp();
+            resp.setGszzl(fundTodayLog.getGszzl());
+            resp.setEarAmount(fundTodayLog.getGszzl());
+            resp.setTotalAmount(fundTodayLog.getGszzl());
+            resp.setCalcDate(fundTodayLog.getGztime());
+            fundLogList.add(resp);
+        }
+        FundDetailResp result = new FundDetailResp();
+        result.setFund(fund);
+        result.setFundLogList(fundLogList);
+        return result;
+    }
+
 
     private String getWeek(Date today) {
         String week = "";
@@ -208,6 +232,7 @@ public class FundController {
         }
         return week;
     }
+
     private synchronized void reloadFund() {
 //        try {
 //            if (new Date().getTime() - lastUploadDate.getTime() >1000 * 60) {
@@ -227,11 +252,11 @@ public class FundController {
         List<Fund> list = fundMapper.queryByBelongName(belongName);
         List<String> ids = new ArrayList<>();
         for (Fund fund : list) {
-            if(fund.getState()==0){
-                ids.add(fund.getId()+"");
+            if (fund.getState() == 0) {
+                ids.add(fund.getId() + "");
             }
         }
-        return clearing(String.join(",",ids));
+        return clearing(String.join(",", ids));
     }
 
     @RequestMapping("/clear")
@@ -239,7 +264,7 @@ public class FundController {
         List<String> fundIdList = Arrays.asList(fundIds.split(","));
         for (String id : fundIdList) {
             Fund fund = fundMapper.queryById(Integer.valueOf(id));
-            if(fund.getConfirmTime() == null){
+            if (fund.getConfirmTime() == null) {
                 continue;
             }
             String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");

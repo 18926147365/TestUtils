@@ -134,11 +134,11 @@ public class Test {
     }
 
 
-    volatile   int d = 0;
+    volatile int d = 0;
 
-    private void write()   {
-        while (true){
-            if(d==1){
+    private void write() {
+        while (true) {
+            if (d == 1) {
                 break;
             }
             try {
@@ -149,13 +149,13 @@ public class Test {
         }
         System.out.println("结束");
     }
-    private void read(){
-        d=1;
+
+    private void read() {
+        d = 1;
     }
 
 
-
-    public static void aa() throws Exception{
+    public static void aa() throws Exception {
         String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/001550.js");
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("js");
@@ -179,20 +179,31 @@ public class Test {
             } else if (obj instanceof Double) {
                 equityReturn = (Double) obj;
             }
-            if(1623772800000l<=new Date(datetime.longValue()).getTime()){
-                double d = total * equityReturn*0.01;
+            if (1623772800000l <= new Date(datetime.longValue()).getTime()) {
+                double d = total * equityReturn * 0.01;
                 total = total + d;
-                System.out.println(sdf.format(new Date(datetime.longValue()))+">>"+equityReturn+">>"+d+">>"+total);
+                System.out.println(sdf.format(new Date(datetime.longValue())) + ">>" + equityReturn + ">>" + d + ">>" + total);
             }
         }
 
 
     }
+
     public static void main(String[] args) throws Exception {
-        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        System.out.println(sdf1.parse("2021-06-16 00:00:00").getTime());
-//        1623772800000l
-//        aa();
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < 9; i++) {
+            list.add(i);
+        }
+        List<Integer> temp = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            temp.add(i);
+            if (temp.size() < 10 && i != list.size() - 1) {
+                continue;
+            }
+            System.out.println(temp);
+            temp.clear();
+
+        }
 
         if (true) {
             return;
