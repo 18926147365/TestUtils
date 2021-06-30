@@ -1,5 +1,6 @@
-package bean;
+package bean.resp;
 
+import bean.FundStatistics;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -12,12 +13,8 @@ import java.util.Date;
  * @Date: 2021/6/18 下午4:12
  */
 @Data
-public class FundStatistics {
+public class FundStatisticsResp extends FundStatistics {
 
-    private BigDecimal amount;
-    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
-    private Date calcDate;
-
-    private String weekDay;
+  private BigDecimal totalAmount;
 
 }

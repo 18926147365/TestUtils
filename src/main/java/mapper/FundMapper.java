@@ -26,6 +26,8 @@ public interface FundMapper {
 
     List<Fund> queryByBelongName(@Param(value = "belongName") String belongName);
 
+    List<Fund> queryByBelongNameAndFundCode(@Param(value = "belongName") String belongName,@Param(value = "fundCode") String fundCode);
+
     BigDecimal totalCalcAmount(@Param(value = "belongName") String belongName);
 
     BigDecimal totalAmount(@Param(value = "belongName") String belongName);

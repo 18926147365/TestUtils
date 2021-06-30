@@ -20,4 +20,8 @@
         ) ;
     </insert>
 
+    <select id="queryDayLog" resultMap="BaseResultMap">
+        SELECT * FROM `fund_day_log` WHERE fund_code = #{fundCode} ORDER BY gztime desc LIMIT 0,#{maxSize}
+    </select>
+
 </mapper>

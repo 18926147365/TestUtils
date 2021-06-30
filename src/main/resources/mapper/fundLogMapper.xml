@@ -44,6 +44,6 @@
 
     <select id="statisticsFund" resultType="FundStatistics">
 SELECT SUM(fl.ear_amount) AS amount ,calc_date as calcDate FROM `fund_log` fl LEFT JOIN fund f
-ON fl.fund_id = f.id WHERE f.belong_name =#{belongName} GROUP BY calc_date ORDER BY calc_date DESC LIMIT 0,30
+ON fl.fund_id = f.id WHERE f.belong_name =#{belongName} GROUP BY calc_date ORDER BY calc_date DESC
     </select>
 </mapper>

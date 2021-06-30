@@ -1,5 +1,6 @@
 package bean;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -15,7 +16,7 @@ public class FundDayLog {
     private Long id;
 
     private String  fundCode;
-
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
     private Date gztime;
 
     private BigDecimal gszzl;

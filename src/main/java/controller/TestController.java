@@ -475,10 +475,9 @@ public class TestController {
 
     @RequestMapping("/test37")
     public void test37() {
-        String key = "testbit222222";
-//        redisLuaUtils.setbit(key,22,"0");
-        System.out.println(redisLuaUtils.setBitIfFalse(key, 2l));
-        System.out.println(redisLuaUtils.getbit(key, 2l));
+        for (FundDayLog fundDayLog : fundDayLogMapper.queryDayLog("001550", 10l)) {
+            System.out.println(fundDayLog.getGszzl());
+        }
     }
 
     private String getUAModel(String ua) {

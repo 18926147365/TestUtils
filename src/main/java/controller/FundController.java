@@ -6,10 +6,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
-import mapper.FundLogMapper;
-import mapper.FundMapper;
-import mapper.FundTalkConfMapper;
-import mapper.FundTodayLogMapper;
+import mapper.*;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,7 +32,7 @@ import java.util.concurrent.*;
  * @Date: 2021/6/10 下午2:45
  */
 @RestController
-@RequestMapping("fund")
+@RequestMapping("fdd")
 @Slf4j
 public class FundController {
 
@@ -54,15 +51,19 @@ public class FundController {
     @Autowired
     private FundTodayLogMapper fundTodayLogMapper;
 
-    @RequestMapping("getFundList")
-    public List<FundResp> getFundList(String belongId) throws Exception {
+    @Autowired
+    private FundDayLogMapper fundDayLogMapper;
 
+    @RequestMapping("/getFundList")
+    public List<FundResp> getFundList(String belongId) throws Exception {
+        log.info("查询基金列表 belongId:" + belongId);
         FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
         String belongName = fundTalkConf.getBelongName();
         this.reloadFund();
         List<FundResp> resultList = new ArrayList<>();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Date todayNow = sdf.parse(sdf.format(new Date()));
+        Map<String, List<FundResp>> mergeMap = new HashMap<>();
         for (Fund fund : fundMapper.queryByBelongName(belongName)) {
             if (fund.getState() == -1) continue;
             FundResp fundResp = JSONObject.parseObject(JSONObject.toJSONString(fund), FundResp.class);
@@ -82,7 +83,36 @@ public class FundController {
                 }
                 fundResp.setFundTotalAmount(fundTotalAmount);
             }
-            resultList.add(fundResp);
+            String mergeKey = fund.getFundCode() + fund.getState();
+            if (!mergeMap.containsKey(mergeKey)) {
+                mergeMap.put(mergeKey, new ArrayList<>());
+            }
+            mergeMap.get(mergeKey).add(fundResp);
+        }
+        //相同合并
+        for (String mergeKey : mergeMap.keySet()) {
+            List<FundResp> fundRespList = mergeMap.get(mergeKey);
+            FundResp resp = JSONObject.parseObject(JSONObject.toJSONString(fundRespList.get(0)), FundResp.class);
+            BigDecimal earAmount = new BigDecimal("0");
+            BigDecimal calcAmount = new BigDecimal("0");
+            BigDecimal payAmount = new BigDecimal("0");
+            BigDecimal fundTotalAmount = new BigDecimal("0");
+            BigDecimal todayEarAmount = new BigDecimal("0");
+            for (FundResp fundResp : fundRespList) {
+                if (fundResp.getState() == 0) {
+                    earAmount = earAmount.add(fundResp.getEarAmount());
+                    todayEarAmount = todayEarAmount.add(fundResp.getTodayEarAmount());
+                    fundTotalAmount = fundTotalAmount.add(fundResp.getFundTotalAmount());
+                }
+                payAmount = payAmount.add(fundResp.getPayAmount());
+                calcAmount = calcAmount.add(fundResp.getCalcAmount());
+            }
+            resp.setFundTotalAmount(fundTotalAmount);
+            resp.setTodayEarAmount(todayEarAmount);
+            resp.setEarAmount(earAmount);
+            resp.setCalcAmount(calcAmount);
+            resp.setPayAmount(payAmount);
+            resultList.add(resp);
         }
         return resultList;
     }
@@ -155,42 +185,86 @@ public class FundController {
     }
 
     @RequestMapping("/statisticsFundList")
-    public List<FundStatistics> statisticsFundList(String belongId) {
+    public List<FundStatisticsResp> statisticsFundList(String belongId) {
         FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
         List<FundStatistics> list = fundLogMapper.statisticsFund(fundTalkConf.getBelongName());
+        list.sort(Comparator.comparing(FundStatistics::getCalcDate));
+        List<FundStatisticsResp> result = new ArrayList<>();
+        BigDecimal totalAmount = new BigDecimal("0");
         for (FundStatistics fundStatistics : list) {
             fundStatistics.setWeekDay(getWeek(fundStatistics.getCalcDate()));
+            FundStatisticsResp resp = JSONObject.parseObject(JSONObject.toJSONString(fundStatistics), FundStatisticsResp.class);
+            totalAmount = totalAmount.add(fundStatistics.getAmount());
+            resp.setTotalAmount(totalAmount);
+            result.add(resp);
         }
-        return list;
+
+        result.sort(Comparator.comparing(FundStatistics::getCalcDate).reversed());
+        return result;
     }
 
 
     @RequestMapping("/queryFundLogDetail")
-    public FundDetailResp queryFundLogDetail(Integer fundId) {
-        Fund fund = fundMapper.queryById(fundId);
-        List<FundLog> loglist = fundLogMapper.queryList(fundId);
+    public List<FundLogResp> queryFundLogDetail(String fundCode, String belongId) {
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        List<Fund> fundList = fundMapper.queryByBelongNameAndFundCode(fundTalkConf.getBelongName(), fundCode);
+
+        Map<String, FundLogResp> mergeMap = new TreeMap<>();
+        for (Fund fund : fundList) {
+            List<FundLog> loglist = fundLogMapper.queryList(fund.getId());
+            for (FundLog fundLog : loglist) {
+                String mergeKey = fundLog.getCalcDate().getTime() + "";
+                if (!mergeMap.containsKey(mergeKey)) {
+                    FundLogResp temp = new FundLogResp();
+                    temp.setEarAmount(new BigDecimal("0"));
+                    temp.setGszzl(fundLog.getGszzl());
+                    temp.setCalcDay(fundLog.getCalcDate());
+                    mergeMap.put(mergeKey, temp);
+                }
+                BigDecimal earTotal = mergeMap.get(mergeKey).getEarAmount().add(fundLog.getEarAmount());
+                mergeMap.get(mergeKey).setEarAmount(earTotal.setScale(2, RoundingMode.HALF_DOWN));
+
+
+                if (fund.getConfirmTime() != null) {
+                    if (fund.getConfirmTime().getTime() == fundLog.getCalcDate().getTime()) {
+                        mergeMap.get(mergeKey).setTag(3);
+                        mergeMap.get(mergeKey).setPayAmount(fund.getPayAmount());
+                    }
+                }
+
+            }
+        }
+        //排序
+        Map<String, FundLogResp> sortMergeMap = new TreeMap<>(new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                return ((String) (o1)).compareTo((String) (o2));
+            }
+        });
+        sortMergeMap.putAll(mergeMap);
         BigDecimal totalAmount = new BigDecimal("0");
         List<FundLogResp> fundLogList = new ArrayList<>();
-        for (FundLog fundLog : loglist) {
-            FundLogResp resp = new FundLogResp();
-            resp.setGszzl(fundLog.getGszzl());
-            resp.setEarAmount(fundLog.getEarAmount());
-            resp.setCalcDate(fundLog.getCalcDate());
-            totalAmount = totalAmount.add(fundLog.getEarAmount());
+        for (String mergeKey : sortMergeMap.keySet()) {
+            FundLogResp resp = sortMergeMap.get(mergeKey);
+            totalAmount = totalAmount.add(resp.getEarAmount());
             resp.setTotalAmount(totalAmount);
+            if (resp.getTag() != 3) {
+                if (totalAmount.doubleValue() > 0) {
+                    resp.setTag(1);
+                } else {
+                    resp.setTag(2);
+                }
+            }
+
             fundLogList.add(resp);
         }
-        FundDetailResp result = new FundDetailResp();
-        result.setFund(fund);
-        result.setFundLogList(fundLogList);
-        return result;
+        return fundLogList;
     }
 
     @RequestMapping("/queryFundLogDetailToday")
-    public FundDetailResp queryFundLogDetailToday(Integer fundId) {
-        Fund fund = fundMapper.queryById(fundId);
+    public List<FundLogResp> queryFundLogDetailToday(String fundCode) {
         List<FundLogResp> fundLogList = new ArrayList<>();
-        List<FundTodayLog> list = fundTodayLogMapper.queryByFundCodeToday(fund.getFundCode());
+        List<FundTodayLog> list = fundTodayLogMapper.queryByFundCodeToday(fundCode);
         for (int i = 0; i < list.size(); i++) {
             if (i % 2 != 0 && i != list.size() - 1) {
                 continue;
@@ -203,12 +277,79 @@ public class FundController {
             resp.setCalcDate(fundTodayLog.getGztime());
             fundLogList.add(resp);
         }
-        FundDetailResp result = new FundDetailResp();
-        result.setFund(fund);
-        result.setFundLogList(fundLogList);
-        return result;
+        return fundLogList;
     }
 
+
+    @RequestMapping("/queryFundDetail")
+    public FundResp queryFundDetail(String fundCode, String belongId) throws ParseException {
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        List<Fund> fundList = fundMapper.queryByBelongNameAndFundCode(fundTalkConf.getBelongName(), fundCode);
+        FundResp resp = JSONObject.parseObject(JSONObject.toJSONString(fundList.get(0)), FundResp.class);
+        BigDecimal earAmount = new BigDecimal("0");
+        BigDecimal calcAmount = new BigDecimal("0");
+        BigDecimal payAmount = new BigDecimal("0");
+        BigDecimal todayEarAmount = new BigDecimal("0");
+        BigDecimal fundTotalAmount = new BigDecimal("0");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date todayNow = sdf.parse(sdf.format(new Date()));
+        for (Fund fund : fundList) {
+            BigDecimal totalTemp = fund.getCalcAmount().subtract(fund.getPayAmount());
+            Date earDate = fund.getEarTime();
+            //判断收益日是否为今天
+            if (earDate != null &&
+                    todayNow.getTime() == sdf.parse(sdf.format(earDate)).getTime()) {
+                Date calcDate = fund.getCalcTime();
+                if (calcDate != null &&
+                        sdf.parse(sdf.format(earDate)).getTime() != sdf.parse(sdf.format(calcDate)).getTime()) {
+                    totalTemp = totalTemp.add(fund.getEarAmount());
+                }
+            }
+            payAmount = payAmount.add(fund.getPayAmount());
+            fundTotalAmount = fundTotalAmount.add(totalTemp);
+            calcAmount = calcAmount.add(fund.getCalcAmount());
+        }
+        resp.setPayAmount(payAmount.setScale(2, RoundingMode.HALF_DOWN));
+        resp.setCalcAmount(calcAmount.setScale(2, RoundingMode.HALF_DOWN));
+        resp.setFundTotalAmount(fundTotalAmount.setScale(2, RoundingMode.HALF_DOWN));
+        return resp;
+    }
+
+    @RequestMapping("/queryDayLog")
+    public List<FundDayLogResp> queryDayLogl(String fundCode, String belongId) {
+        FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
+        List<Fund> fundList = fundMapper.queryByBelongNameAndFundCode(fundTalkConf.getBelongName(), fundCode);
+        Set<Long> existsSet = new HashSet<>();
+        for (Fund fund : fundList) {
+            if (fund.getConfirmTime() == null) continue;
+            existsSet.add(fund.getConfirmTime().getTime());
+        }
+        List<FundDayLogResp> result = new ArrayList<>();
+        List<FundDayLog> dayLogs = fundDayLogMapper.queryDayLog(fundCode, 90l);
+        dayLogs.sort(Comparator.comparing(FundDayLog::getGztime));
+        BigDecimal total = new BigDecimal("0");
+        boolean isPay = false;
+        for (FundDayLog dayLog : dayLogs) {
+            FundDayLogResp resp = JSONObject.parseObject(JSONObject.toJSONString(dayLog), FundDayLogResp.class);
+            total = total.add(resp.getGszzl());
+            resp.setTag(0);
+            if (isPay) {
+                if (total.doubleValue() > 0) {
+                    resp.setTag(1);
+                } else {
+                    resp.setTag(2);
+                }
+
+            }
+            if (existsSet.contains(dayLog.getGztime().getTime())) {
+                resp.setTag(3);
+                isPay = true;
+            }
+            resp.setTotal(total);
+            result.add(resp);
+        }
+        return result;
+    }
 
     private String getWeek(Date today) {
         String week = "";

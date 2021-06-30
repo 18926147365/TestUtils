@@ -220,6 +220,7 @@ public class FundTask {
             StringBuilder fundTipBuilder = new StringBuilder();
             DingMarkDown dingMarkDown = new DingMarkDown("结算", "\n").lineBreak();
             BigDecimal calcTotal = new BigDecimal("0");//剩余金额
+            Map<String,Fund> mergeMap = new HashMap<>();
             for (Fund fund : fundList) {
                 if (fund.getState() == 1) {//待确认
                     fundTipBuilder.append(buleDmk("[待确认]：" + fund.getFundName() + "(购入" + fund.getCalcAmount() + "元)") + "\n\n");
@@ -227,32 +228,45 @@ public class FundTask {
                 }
                 if (fund.getState() == 0) {//正常交易
                     if (fund.getGszzl() == null) continue;
-                    if (fund.getEarAmount().doubleValue() > 0) {
-                        up++;
-                    } else {
-                        down++;
+                    if (!mergeMap.containsKey(fund.getFundCode())) {
+                        mergeMap.put(fund.getFundCode(),fund);
+                    }else{
+                        Fund temp = mergeMap.get(fund.getFundCode());
+                        temp.setCalcAmount(temp.getCalcAmount().add(fund.getCalcAmount()));
+                        temp.setEarAmount(temp.getEarAmount().add(fund.getEarAmount()));
+                        temp.setPayAmount(temp.getPayAmount().add(fund.getPayAmount()));
                     }
-                    calcTotal = calcTotal.add(fund.getCalcAmount());
-                    earTotal = earTotal.add(fund.getEarAmount());
-                    String moneyStr = fund.getEarAmount().setScale(2, RoundingMode.HALF_DOWN).toString();
-                    if (fund.getEarAmount().doubleValue() > 0) {
-                        moneyStr = "+" + moneyStr;
-                    } else {
-                    }
-                    String gzzlStr = fund.getGszzl().setScale(3, RoundingMode.HALF_DOWN).toString();
-                    if (fund.getGszzl().doubleValue() > 0) {
-                        gzzlStr = "+" + gzzlStr;
-                    }
-                    gzzlStr += "%";
-
-                    String content = String.format("[%s]：%s(%s元)", gzzlStr, fund.getFundName(), moneyStr);
-                    if (fund.getGszzl().doubleValue() > 0) {
-                        content = redDmk(content);
-                    } else {
-                        content = greeDmk(content);
-                    }
-                    fundTipBuilder.append(content + "\n\n");
                 }
+            }
+
+            for (String fundCode : mergeMap.keySet()) {
+                Fund fund = mergeMap.get(fundCode);
+                if (fund.getEarAmount().doubleValue() > 0) {
+                    up++;
+                } else {
+                    down++;
+                }
+
+                calcTotal = calcTotal.add(fund.getCalcAmount());
+                earTotal = earTotal.add(fund.getEarAmount());
+                String moneyStr = fund.getEarAmount().setScale(2, RoundingMode.HALF_DOWN).toString();
+                if (fund.getEarAmount().doubleValue() > 0) {
+                    moneyStr = "+" + moneyStr;
+                } else {
+                }
+                String gzzlStr = fund.getGszzl().setScale(2, RoundingMode.HALF_DOWN).toString();
+                if (fund.getGszzl().doubleValue() > 0) {
+                    gzzlStr = "+" + gzzlStr;
+                }
+                gzzlStr += "%";
+
+                String content = String.format("[%s]：%s(%s元)", gzzlStr, fund.getFundName(), moneyStr);
+                if (fund.getGszzl().doubleValue() > 0) {
+                    content = redDmk(content);
+                } else {
+                    content = greeDmk(content);
+                }
+                fundTipBuilder.append(content + "\n\n");
             }
 
             BigDecimal earAmount = new BigDecimal("0");

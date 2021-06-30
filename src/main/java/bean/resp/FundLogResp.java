@@ -16,12 +16,18 @@ public class FundLogResp {
 
     @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd HH:mm:ss")
     private Date calcDate;
+    @JsonFormat(timezone = "GMT+8", pattern = "yyyy-MM-dd")
+    private Date calcDay;
 
     private BigDecimal gszzl;
 
     private BigDecimal totalAmount;
 
     private BigDecimal earAmount;
+
+    private int tag;//1:涨 2:跌 3:买入点
+
+    private BigDecimal payAmount;//购入金额
 
 
 
