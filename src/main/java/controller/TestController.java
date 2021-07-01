@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.omg.PortableServer.POA;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -566,6 +567,8 @@ public class TestController {
     private FundDayLogMapper fundDayLogMapper;
     @Autowired
     private FundTodayLogMapper fundTodayLogMapper;
+    @Value("${is_notify_fund}")
+    private String isNotifyFund;
     @RequestMapping("/test114")
     public void test114(int i) throws Exception {
 

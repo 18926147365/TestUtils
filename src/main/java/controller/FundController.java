@@ -70,6 +70,9 @@ public class FundController {
             if (fundResp.getState() == 0) {
                 BigDecimal fundTotalAmount = fund.getCalcAmount().subtract(fund.getPayAmount());
                 Date earDate = fundResp.getEarTime();
+                fundResp.setTodayEarAmount(new BigDecimal("0"));
+                fundResp.setTodayEarGszzl(new BigDecimal("0"));
+//
                 //判断收益日是否为今天
                 if (earDate != null &&
                         todayNow.getTime() == sdf.parse(sdf.format(earDate)).getTime()) {
@@ -200,7 +203,16 @@ public class FundController {
         }
 
         result.sort(Comparator.comparing(FundStatistics::getCalcDate).reversed());
-        return result;
+        List<FundStatisticsResp> resp = new ArrayList<>();
+        int max = 30;
+        for (int i = 0; i < result.size(); i++) {
+            if (i >= 30) {
+                break;
+            }
+            resp.add(result.get(i));
+        }
+
+        return resp;
     }
 
 
@@ -446,6 +458,11 @@ public class FundController {
         }
         fundTask.execute(-1);
         return "完成";
+    }
+
+    @RequestMapping("/cail")
+    public void cail() {
+        fundTask.cailData();
     }
 
 }

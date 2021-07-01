@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import mapper.*;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -65,6 +66,9 @@ public class FundTask {
     @Autowired
     private FundDayLogMapper fundDayLogMapper;
 
+    @Value("${is_notify_fund}")
+    private String isNotifyFund;
+
     @Scheduled(cron = "0 0/5 * * * ?")
     public void updateTask() {
         try {
@@ -87,6 +91,52 @@ public class FundTask {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Scheduled(cron = "0 30 08 * * ?")
+    public void cailData() {
+        for (Fund fund : fundMapper.queryAll(0)) {
+            String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
+            ScriptEngineManager manager = new ScriptEngineManager();
+            ScriptEngine engine = manager.getEngineByName("js");
+            try {
+                engine.eval(result);
+            } catch (ScriptException e) {
+                e.printStackTrace();
+            }
+            ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            BigDecimal cailTotal = fund.getPayAmount();
+            Date lastDate = new Date();
+            for (String s : scriptObjectMirror.keySet()) {
+                ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
+                Double datetime = (Double) mirror.get("x");
+                Object obj = mirror.get("equityReturn");
+                Double equityReturn = new Double("0");
+                if (obj instanceof Integer) {
+                    equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
+                } else if (obj instanceof Double) {
+                    equityReturn = (Double) obj;
+                }
+                Date gztime = new Date(datetime.longValue());
+                BigDecimal gzssl = new BigDecimal(equityReturn);
+                if (fund.getConfirmTime().getTime() <= gztime.getTime()) {
+                    BigDecimal dayAmount = cailTotal.multiply(gzssl.multiply(new BigDecimal("0.01")));
+                    cailTotal = cailTotal.add(dayAmount);
+                }
+                lastDate = gztime;
+            }
+            fundMapper.updateCalcFund(fund.getId(), cailTotal, lastDate);
+            log.info(fund.getFundName() + "日期: " + sdf.format(lastDate) + " 相差金额：" + (cailTotal.setScale(2, RoundingMode.HALF_DOWN).subtract(fund.getCalcAmount())) + " 修正后:" + cailTotal.setScale(2, BigDecimal.ROUND_UP));
+        }
+        try {
+            this.execute(-1);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        log.info("修正基金金额数据完成");
     }
 
 
@@ -206,7 +256,9 @@ public class FundTask {
     }
 
     public void notifyTalk(Integer type) {
-
+        if ("0".equals(isNotifyFund)) {
+            return;
+        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         List<FundTalkConf> talkConfList = fundTalkConfMapper.queryAll();
         Map<String, List<Integer>> groupMap = new HashMap<>();
@@ -220,7 +272,7 @@ public class FundTask {
             StringBuilder fundTipBuilder = new StringBuilder();
             DingMarkDown dingMarkDown = new DingMarkDown("结算", "\n").lineBreak();
             BigDecimal calcTotal = new BigDecimal("0");//剩余金额
-            Map<String,Fund> mergeMap = new HashMap<>();
+            Map<String, Fund> mergeMap = new HashMap<>();
             for (Fund fund : fundList) {
                 if (fund.getState() == 1) {//待确认
                     fundTipBuilder.append(buleDmk("[待确认]：" + fund.getFundName() + "(购入" + fund.getCalcAmount() + "元)") + "\n\n");
@@ -229,8 +281,8 @@ public class FundTask {
                 if (fund.getState() == 0) {//正常交易
                     if (fund.getGszzl() == null) continue;
                     if (!mergeMap.containsKey(fund.getFundCode())) {
-                        mergeMap.put(fund.getFundCode(),fund);
-                    }else{
+                        mergeMap.put(fund.getFundCode(), fund);
+                    } else {
                         Fund temp = mergeMap.get(fund.getFundCode());
                         temp.setCalcAmount(temp.getCalcAmount().add(fund.getCalcAmount()));
                         temp.setEarAmount(temp.getEarAmount().add(fund.getEarAmount()));
@@ -301,6 +353,7 @@ public class FundTask {
             dingMarkDown.line("点击查看更多基金信息", "http://42.194.205.61:8082/#/fund/" + fundTalkConf.getBelongId());
 
             DingTalkSend dingTalkSend1 = new DingTalkSend(dingMarkDown);
+
             dingTalkSend1.setAccessToken(fundTalkConf.getAccessToken());
 
             dingTalkSend1.send();
@@ -310,7 +363,7 @@ public class FundTask {
 
         DingText dingText = new DingText();
         dingText.setContent("今天收益:" + formatMoney(allTotalAmount) + "元");
-        dingText.setAtAll(true);
+        dingText.setAtAll(false);
         DingTalkSend dingTalkSend2 = new DingTalkSend(dingText);
         dingTalkSend2.setAccessToken("e13e4148cb80bb1927cd5d9e8f340590b7df06780587c0233c9fa9b996647a9a");
         dingTalkSend2.send();
@@ -370,48 +423,12 @@ public class FundTask {
 
     }
 
-    private double calcFund(Fund fund) {
-        String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("js");
-        try {
-            engine.eval(result);
-        } catch (ScriptException e) {
-            e.printStackTrace();
-        }
-        ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        BigDecimal calcTemp = new BigDecimal("0");
-        if (fund.getCalcAmount() == null) {
-            fund.setCalcAmount(fund.getPayAmount());
-        }
-        if (fund.getCalcTime() == null) {
-            fund.setCalcTime(fund.getPayTime());
-        }
-        double total = fund.getCalcAmount().doubleValue();
-        Date lastDate = null;
-        for (String s : scriptObjectMirror.keySet()) {
-            ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
-            Double datetime = (Double) mirror.get("x");
-            Object obj = mirror.get("equityReturn");
-            Double equityReturn = new Double("0");
-            if (obj instanceof Integer) {
-                equityReturn = Double.valueOf((Integer) mirror.get("equityReturn"));
-            } else if (obj instanceof Double) {
-                equityReturn = (Double) obj;
-            }
-            if (datetime.longValue() > fund.getCalcTime().getTime()) {
-                calcTemp = calcTemp.add(BigDecimal.valueOf(equityReturn));
-                String after = total + "";
-                total = total + total * (equityReturn.doubleValue() / 100);
-                lastDate = new Date(datetime.longValue());
-                log.info(sdf.format(new Date(datetime.longValue())) + "  " + equityReturn + " 原有金额:" + after + " 变更后:" + total);
-            }
-        }
-        if (lastDate != null) {
-            fundMapper.updateCalcFund(fund.getId(), new BigDecimal(total), lastDate);
-        }
-        return total;
+    /**
+     * 修正金额
+     */
+    private void cailAmountUpdate() {
+
+
     }
 
     class FundStatModel {
