@@ -33,6 +33,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StopWatch;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
+import task.FundTask;
 import utils.Application;
 import utils.HttpClientUtil;
 import utils.RedisLuaUtils;
@@ -120,15 +121,11 @@ public class test {
 
     }
 
+    @Autowired
+    private FundTask fundTask;
     @Test
     public void dd() throws ParseException {
-        for (Fund fund : fundMapper.queryAll(0)) {
-            updateDayLog(fund.getFundCode());
-        }
-        List<String> fundCodeList = Arrays.asList("000960");
-        for (String s : fundCodeList) {
-
-        }
+        fundTask.notifyTalk(2);
     }
 
 

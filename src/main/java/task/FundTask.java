@@ -93,6 +93,12 @@ public class FundTask {
         }
     }
 
+    @Scheduled(cron = "0 55 08 * * ?")
+    public void updateConfirmFund() {
+        log.info("更新待确认的基金列表");
+        fundMapper.updateConfirmFundList();
+    }
+
     @Scheduled(cron = "0 30 08 * * ?")
     public void cailData() {
         for (Fund fund : fundMapper.queryAll(0)) {
@@ -188,11 +194,11 @@ public class FundTask {
                 }
                 //当前收益计算
                 fundMapper.updateFund(fund.getId(), fundJson.getBigDecimal("gszzl"), (fundJson.getDate("gztime")));
-                updateEarAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
+                updateEarAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"),fundJson.getBigDecimal("gsz"));
                 updateCalcAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
                 updateFundLogToday(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
                 if (type == 2) {
-                    updateFundLogDay(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
+                    updateFundLogDay(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"),fundJson.getBigDecimal("gsz"));
                 }
             }
         }
@@ -209,15 +215,16 @@ public class FundTask {
         fundTodayLogMapper.insert(todayLog);
     }
 
-    private void updateFundLogDay(String fundCode, Date gztime, BigDecimal gszzl) {
+    private void updateFundLogDay(String fundCode, Date gztime, BigDecimal gszzl,BigDecimal netValue) {
         FundDayLog dayLog = new FundDayLog();
         dayLog.setGszzl(gszzl);
         dayLog.setFundCode(fundCode);
         dayLog.setGztime(gztime);
+        dayLog.setNetValue(netValue);
         fundDayLogMapper.insert(dayLog);
     }
 
-    private void updateEarAmount(Fund fund, Date gztime, BigDecimal gszzl) {
+    private void updateEarAmount(Fund fund, Date gztime, BigDecimal gszzl,BigDecimal netValue) {
         BigDecimal earAmount = fund.getCalcAmount();
         earAmount = earAmount.multiply(gszzl.multiply(new BigDecimal("0.01")));
         fundMapper.updateEarFund(fund.getId(), earAmount, new Date());
@@ -226,6 +233,7 @@ public class FundTask {
         statModel.setFundCode(fund.getFundCode());
         statModel.setFundId(fund.getId());
         statModel.setGszzl(gszzl);
+        statModel.setNetValue(netValue);
         updateFundLog(statModel);
     }
 
@@ -288,6 +296,8 @@ public class FundTask {
                         temp.setEarAmount(temp.getEarAmount().add(fund.getEarAmount()));
                         temp.setPayAmount(temp.getPayAmount().add(fund.getPayAmount()));
                     }
+                }else if(fund.getState() == 2){//卖出确认中
+                    fundTipBuilder.append(buleHui("[卖出确认中]：" + fund.getFundName() + " 持有:"+fund.getCalcAmount().setScale(0,RoundingMode.FLOOR)+"元(预计收益" + fund.getCalcAmount().subtract(fund.getPayAmount()).setScale(0,RoundingMode.FLOOR) + "元)") + "\n\n");
                 }
             }
 
@@ -323,11 +333,11 @@ public class FundTask {
 
             BigDecimal earAmount = new BigDecimal("0");
             if (type == 1) {
-                redisLuaUtils.set(fundTalkConf.getAccessToken() + ":erarToal", earTotal.setScale(2, RoundingMode.HALF_DOWN).toString(), 60 * 60 * 13);
+                redisLuaUtils.set(fundTalkConf.getBelongId() + ":erarToal", earTotal.setScale(2, RoundingMode.HALF_DOWN).toString(), 60 * 60 * 13);
                 earAmount = earTotal.setScale(2, RoundingMode.HALF_DOWN);
                 totalAmount = totalAmount.add(earTotal);
             } else if (type == 2) {
-                String lastEar = redisLuaUtils.get(fundTalkConf.getAccessToken() + ":erarToal");
+                String lastEar = redisLuaUtils.get(fundTalkConf.getBelongId() + ":erarToal");
                 if (StringUtils.isBlank(lastEar)) {
                     lastEar = "0";
                 }
@@ -380,6 +390,10 @@ public class FundTask {
     private static String buleDmk(String content) {
         return "<font color=#003e9f  face=\"黑体\">" + content + "</font>";
     }
+    private static String buleHui(String content) {
+        return "<font color=#9007c1  face=\"黑体\">" + content + "</font>";
+    }
+
 
     private String redDmk(String content) {
         return "<font color=#dc2626  face=\"黑体\">" + content + "</font>";
@@ -411,6 +425,7 @@ public class FundTask {
             fundLog.setFundCode(statModel.getFundCode());
             fundLog.setFundId(statModel.getFundId());
             fundLog.setGszzl(statModel.getGszzl());
+            fundLog.setNetValue(statModel.getNetValue());
             fundLogMapper.insert(fundLog);
         } else {
             fundLog.setFundCode(statModel.getFundCode());
@@ -418,6 +433,7 @@ public class FundTask {
             fundLog.setCalcDate(new Date());
             fundLog.setFundId(statModel.getFundId());
             fundLog.setGszzl(statModel.getGszzl());
+            fundLog.setNetValue(statModel.getNetValue());
             fundLogMapper.update(fundLog);
         }
 
@@ -441,11 +457,21 @@ public class FundTask {
 
         private Double calcAmount;
 
+        private BigDecimal netValue;
+
         private BigDecimal gszzl;
 
         private String belongName;
 
         private BigDecimal earAmount;
+
+        public BigDecimal getNetValue() {
+            return netValue;
+        }
+
+        public void setNetValue(BigDecimal netValue) {
+            this.netValue = netValue;
+        }
 
         public BigDecimal getEarAmount() {
             return earAmount;

@@ -7,11 +7,14 @@
         <result column="id" property="id"></result>
         <result column="fund_code" property="fundCode"></result>
         <result column="gszzl" property="gszzl"></result>
+        <result column="net_value" property="netValue"></result>
 
     </resultMap>
+
+    
     <insert id="insert" parameterType="FundDayLog">
-        INSERT INTO `fund_day_log` (fund_code,gszzl,gztime)
-        SELECT #{fundCode},#{gszzl},DATE_FORMAT(#{gztime}, '%Y-%m-%d')
+        INSERT INTO `fund_day_log` (fund_code,gszzl,gztime,net_value)
+        SELECT #{fundCode},#{gszzl},DATE_FORMAT(#{gztime}, '%Y-%m-%d'),#{netValue}
         FROM DUAL
         WHERE NOT EXISTS(
         (SELECT *

@@ -11,7 +11,27 @@ public class PhoneBrandUtils {
 
 
     public static void main(String[] args) {
-        System.out.println(getBrand("Linux; Android 10; TAS-AN00 Build/HUAWEITAS-AN00; wv"));
+        System.out.println(getModel("Linux; Android 10; TAS-AN00 Build/HUAWEITAS-AN00; wv"));
+    }
+
+    public static String getModel(String ua){
+        if(ua.toLowerCase().contains("linux;")){//安卓判断
+            String[] uas=ua.split(";");
+            for (String s : uas) {
+                String uaTrim=(s.trim());
+                if(uaTrim.contains("Build/")){
+                    String[] uaModels=uaTrim.split("Build/");
+                    if(uaModels.length!=0){
+                        return ((uaModels[0]).trim());
+                    }
+
+                }
+
+            }
+        }else if(ua.contains("iPhone;")){
+           return "iPhone";
+        }
+        return null;
     }
     private static String getBrand(String m) {
         if(StringUtils.isEmpty(m))return null;

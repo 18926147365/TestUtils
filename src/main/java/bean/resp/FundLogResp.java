@@ -25,6 +25,8 @@ public class FundLogResp {
 
     private BigDecimal earAmount;
 
+    private BigDecimal netValue;//净值
+
     private int tag;//1:涨 2:跌 3:买入点
 
     private BigDecimal payAmount;//购入金额

@@ -42,7 +42,7 @@ public interface FundMapper {
 
     BigDecimal todayEarAmount(@Param(value = "belongName") String belongName);
 
-
+    void updateConfirmFundList();
 
 
 }

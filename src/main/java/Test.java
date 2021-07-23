@@ -186,7 +186,7 @@ public class Test {
     }
 
     public static void main(String[] args) throws Exception {
-        aa();
+        dd();
         if (true) {
             return;
         }
@@ -741,4 +741,18 @@ public class Test {
 //        return response;
 //
 //    }
+    /**
+     * ad
+     * */
+    public static void dd() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date endDate = new Date();
+        Date startDate = new Date(endDate.getTime() + (1000 * 60 * 60 * 24 * 30));
+        System.out.println((long)(1000 * 60 * 60 * 24) * 30);
+
+    }
+
+    private static <K, V> Map<K, V> getMap(Class<K> kClass, Class<V> vClass) {
+        return null;
+    }
 }

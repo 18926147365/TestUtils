@@ -24,6 +24,8 @@ public class FundLog {
 
     private BigDecimal gszzl;
 
+    private BigDecimal netValue;
+
     private BigDecimal earAmount;
 
     private Date modifyTime;

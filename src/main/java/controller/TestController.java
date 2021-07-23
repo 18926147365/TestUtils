@@ -66,7 +66,7 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("test")
 @Slf4j
-public class TestController {
+public class TestController extends BaseController{
     private static String str = "123123";
 
 
@@ -569,10 +569,11 @@ public class TestController {
     private FundTodayLogMapper fundTodayLogMapper;
     @Value("${is_notify_fund}")
     private String isNotifyFund;
+
+
     @RequestMapping("/test114")
-    public void test114(int i) throws Exception {
-
-
+    public void test114() throws Exception {
+        fundTask.notifyTalk(2);
     }
 
     @RequestMapping("/ccc")

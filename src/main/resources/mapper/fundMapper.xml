@@ -57,12 +57,17 @@
         select * from fund where belong_name = #{belongName};
     </select>
     <select id="queryByBelongNameAndFundCode" resultMap="BaseResultMap">
-        select * from fund where belong_name = #{belongName} and fund_code = #{fundCode} and state=0
+        select * from fund where belong_name = #{belongName} and fund_code = #{fundCode} and state in(0,2)
     </select>
 
     <select id="todayEarAmount" resultType="java.math.BigDecimal" >
         SELECT SUM(ear_amount) FROM fund WHERE state = 0 AND belong_name = #{belongName} AND ear_time > DATE_FORMAT(SYSDATE(), '%Y-%m-%d')
     </select>
+
+    <update id="updateConfirmFundList">
+        update fund set ear_amount=0,state=0,gszzl = 0,calc_time = DATE_FORMAT(SYSDATE(), '%Y-%m-%d')  where confirm_time = DATE_FORMAT(SYSDATE(), '%Y-%m-%d') and state = 1
+    </update>
+
 
 
 </mapper>

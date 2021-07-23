@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import lombok.extern.slf4j.Slf4j;
 import mapper.*;
+import net.minidev.json.JSONUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +19,7 @@ import utils.RedisLuaUtils;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -34,7 +36,7 @@ import java.util.concurrent.*;
 @RestController
 @RequestMapping("fdd")
 @Slf4j
-public class FundController {
+public class FundController extends BaseController {
 
     @Autowired
     private FundTask fundTask;
@@ -54,9 +56,11 @@ public class FundController {
     @Autowired
     private FundDayLogMapper fundDayLogMapper;
 
+
     @RequestMapping("/getFundList")
     public List<FundResp> getFundList(String belongId) throws Exception {
-        log.info("查询基金列表 belongId:" + belongId);
+
+        log.info("查询基金列表,belongId:" + belongId + " 访问:" + getBrand());
         FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
         String belongName = fundTalkConf.getBelongName();
         this.reloadFund();
@@ -67,7 +71,7 @@ public class FundController {
         for (Fund fund : fundMapper.queryByBelongName(belongName)) {
             if (fund.getState() == -1) continue;
             FundResp fundResp = JSONObject.parseObject(JSONObject.toJSONString(fund), FundResp.class);
-            if (fundResp.getState() == 0) {
+            if (fundResp.getState() == 0 || fundResp.getState() == 2) {
                 BigDecimal fundTotalAmount = fund.getCalcAmount().subtract(fund.getPayAmount());
                 Date earDate = fundResp.getEarTime();
                 fundResp.setTodayEarAmount(new BigDecimal("0"));
@@ -102,7 +106,7 @@ public class FundController {
             BigDecimal fundTotalAmount = new BigDecimal("0");
             BigDecimal todayEarAmount = new BigDecimal("0");
             for (FundResp fundResp : fundRespList) {
-                if (fundResp.getState() == 0) {
+                if (fundResp.getState() == 0 || fundResp.getState() == 2) {
                     earAmount = earAmount.add(fundResp.getEarAmount());
                     todayEarAmount = todayEarAmount.add(fundResp.getTodayEarAmount());
                     fundTotalAmount = fundTotalAmount.add(fundResp.getFundTotalAmount());
@@ -122,7 +126,7 @@ public class FundController {
 
     @RequestMapping("/getFundUser")
     public FundUserResp getFundUser(String belongId) throws IOException, ParseException {
-        log.info("查询用户余额 belongId:" + belongId);
+        log.info("查询用户余额,belongId:" + belongId + " 访问:" + getBrand());
         FundTalkConf fundTalkConf = fundTalkConfMapper.queryByBeLongId(belongId);
         String belongName = fundTalkConf.getBelongName();
         this.reloadFund();
@@ -402,7 +406,8 @@ public class FundController {
 
     @RequestMapping("/clear2")
     public String clearing1(String belongName) throws Exception {
-        List<Fund> list = fundMapper.queryByBelongName(belongName);
+//        List<Fund> list = fundMapper.queryByBelongName(belongName);
+        List<Fund> list = fundMapper.queryAll(0);
         List<String> ids = new ArrayList<>();
         for (Fund fund : list) {
             if (fund.getState() == 0) {
@@ -412,15 +417,45 @@ public class FundController {
         return clearing(String.join(",", ids));
     }
 
+    static Map<String, String> cacheMap = new ConcurrentHashMap<>();
+
     @RequestMapping("/clear")
     public String clearing(String fundIds) throws Exception {
         List<String> fundIdList = Arrays.asList(fundIds.split(","));
+        ExecutorService pool = new ThreadPoolExecutor(10, 10, 500,
+                TimeUnit.MILLISECONDS,
+                new ArrayBlockingQueue<>(50),
+                Executors.defaultThreadFactory(),
+                new RejectedExecutionHandler() {
+                    @Override
+                    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
+                        while (true) {
+                            int capacity = executor.getQueue().remainingCapacity();//任务队列剩余容量
+                            if (capacity != 0) {
+                                break;
+                            }
+                            try {
+                                Thread.sleep(300);//线程休眠
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (!executor.isShutdown()) {
+                            r.run();
+                        }
+                    }
+                });
+        ((ThreadPoolExecutor) pool).allowCoreThreadTimeOut(true);
         for (String id : fundIdList) {
+
             Fund fund = fundMapper.queryById(Integer.valueOf(id));
-            if (fund.getConfirmTime() == null) {
-                continue;
+            String result = "";
+            if (cacheMap.containsKey(fund.getFundCode())) {
+                result = cacheMap.get(fund.getFundCode());
+            } else {
+                result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
+                cacheMap.put(fund.getFundCode(), result);
             }
-            String result = HttpClientUtil.get("http://fund.eastmoney.com/pingzhongdata/" + fund.getFundCode() + ".js");
             ScriptEngineManager manager = new ScriptEngineManager();
             ScriptEngine engine = manager.getEngineByName("js");
             try {
@@ -430,11 +465,12 @@ public class FundController {
             }
             ScriptObjectMirror scriptObjectMirror = (ScriptObjectMirror) engine.get("Data_netWorthTrend");
             BigDecimal calcTemp = new BigDecimal(fund.getPayAmount().doubleValue());
-            fundLogMapper.delete(fund.getId());
+//            fundLogMapper.delete(fund.getId());
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             for (String s : scriptObjectMirror.keySet()) {
                 ScriptObjectMirror mirror = (ScriptObjectMirror) scriptObjectMirror.get(s);
                 Double datetime = (Double) mirror.get("x");
+                Double y = (Double) mirror.get("y");
                 Object obj = mirror.get("equityReturn");
                 Double equityReturn = new Double("0");
                 if (obj instanceof Integer) {
@@ -442,21 +478,30 @@ public class FundController {
                 } else if (obj instanceof Double) {
                     equityReturn = (Double) obj;
                 }
-                if (fund.getConfirmTime().getTime() <= new Date(datetime.longValue()).getTime()) {
-                    BigDecimal temp = calcTemp.multiply(new BigDecimal(equityReturn).multiply(new BigDecimal("0.01")));
-                    calcTemp = calcTemp.add(temp);
-                    FundLog fundLog = new FundLog();
-                    fundLog.setFundCode(fund.getFundCode());
-                    fundLog.setGszzl(new BigDecimal(equityReturn));
-                    fundLog.setFundId(fund.getId());
-                    fundLog.setModifyTime(new Date());
-                    fundLog.setEarAmount(temp.setScale(2, RoundingMode.HALF_DOWN));
-                    fundLog.setCalcDate(new Date(datetime.longValue()));
-                    fundLogMapper.insert(fundLog);
-                }
+                FundDayLog dayLog = new FundDayLog();
+                dayLog.setGztime(new Date(datetime.longValue()));
+                dayLog.setGszzl(new BigDecimal(equityReturn));
+                dayLog.setFundCode(fund.getFundCode());
+                dayLog.setNetValue(new BigDecimal(y));
+                fundDayLogMapper.insert(dayLog);
+//                if (fund.getConfirmTime().getTime() <= new Date(datetime.longValue()).getTime()) {
+//                    BigDecimal temp = calcTemp.multiply(new BigDecimal(equityReturn).multiply(new BigDecimal("0.01")));
+//                    calcTemp = calcTemp.add(temp);
+//                    FundLog fundLog = new FundLog();
+//                    fundLog.setFundCode(fund.getFundCode());
+//                    fundLog.setGszzl(new BigDecimal(equityReturn));
+//                    fundLog.setNetValue(new BigDecimal(y));
+//                    fundLog.setFundId(fund.getId());
+//                    fundLog.setModifyTime(new Date());
+//                    fundLog.setEarAmount(temp.setScale(2, RoundingMode.HALF_DOWN));
+//                    fundLog.setCalcDate(new Date(datetime.longValue()));
+//                    fundLogMapper.insert(fundLog);
+//                }
             }
+            System.out.println("完成：" + fund.getId());
+
         }
-        fundTask.execute(-1);
+//        fundTask.execute(-1);
         return "完成";
     }
 
@@ -464,5 +509,31 @@ public class FundController {
     public void cail() {
         fundTask.cailData();
     }
+
+    @RequestMapping("/queryFundAll")
+    public List<FundAllResp> queryFundAll() throws Exception {
+        List<FundAllResp> result = new ArrayList<>();
+        for (FundTalkConf fundTalkConf : fundTalkConfMapper.queryAll()) {
+            FundAllResp allResp = new FundAllResp();
+            String belongName = fundTalkConf.getBelongName();
+            allResp.setBelongName(belongName);
+            String belongId = fundTalkConf.getBelongId();
+            allResp.setBelongId(belongId);
+            List<FundResp> fundRespList = getFundList(belongId);
+            BigDecimal totalEarAmount = new BigDecimal("0");
+            BigDecimal totalEarAllAmount = new BigDecimal("0");
+            for (FundResp fundResp : fundRespList) {
+                totalEarAmount = totalEarAmount.add(fundResp.getEarAmount());
+                totalEarAllAmount = totalEarAllAmount.add(fundResp.getFundTotalAmount());
+            }
+            allResp.setFundList(fundRespList);
+            allResp.setTotalEarAmount(totalEarAmount);
+            allResp.setTotalEarAllAmount(totalEarAllAmount);
+            result.add(allResp);
+        }
+
+        return result;
+    }
+
 
 }

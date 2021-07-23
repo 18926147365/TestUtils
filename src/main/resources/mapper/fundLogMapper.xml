@@ -9,6 +9,7 @@
         <result column="fund_code" property="fundCode"></result>
         <result column="calc_date" property="calcDate"></result>
         <result column="gszzl" property="gszzl"></result>
+        <result column="net_value" property="netValue"></result>
         <result column="ear_amount" property="earAmount"></result>
         <result column="modify_time" property="modifyTime"></result>
 
@@ -29,13 +30,13 @@
     </select>
 
     <insert id="insert" parameterType="FundLog">
-        INSERT INTO `fund_log` (fund_id,fund_code,calc_date,gszzl,ear_amount,modify_time)
-            values(#{fundId},#{fundCode},#{calcDate},#{gszzl},#{earAmount},sysdate())
+        INSERT INTO `fund_log` (fund_id,fund_code,calc_date,gszzl,ear_amount,modify_time,net_value)
+            values(#{fundId},#{fundCode},#{calcDate},#{gszzl},#{earAmount},sysdate(),#{netValue})
     </insert>
 
     <insert id="update" parameterType="FundLog">
         update fund_log set fund_id = #{fundId},fund_code = #{fundCode},calc_date = #{calcDate},
-        gszzl = #{gszzl},ear_amount = #{earAmount},modify_time = sysdate() where id =#{id}
+        gszzl = #{gszzl},ear_amount = #{earAmount},modify_time = sysdate(),net_value = #{netValue} where id =#{id}
     </insert>
     <delete id="delete">
     DELETE FROM `fund_log` WHERE fund_id = #{fundId}

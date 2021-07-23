@@ -21,4 +21,5 @@ public class FundDayLog {
 
     private BigDecimal gszzl;
 
+    private BigDecimal netValue;
 }
