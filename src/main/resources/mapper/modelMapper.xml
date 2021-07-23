@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mapper.ModelMapper">
+    <resultMap id="BaseResultMap" type="bean.Model">
+        <result column="id" property="id"></result>
+        <result column="brand" property="brand"></result>
+        <result column="ua_model" property="uaModel"></result>
+    </resultMap>
+    <select id="queryByUa" resultMap="BaseResultMap">
+
+        select * from model where ua_model = #{uaModel}
+    </select>
+
+</mapper>
