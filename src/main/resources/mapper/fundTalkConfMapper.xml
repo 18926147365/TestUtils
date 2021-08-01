@@ -9,6 +9,7 @@
         <result column="belong_id" property="belongId"></result>
         <result column="state" property="state"></result>
         <result column="amount" property="amount"></result>
+        <result column="amount_my" property="amountMy"></result>
         <result column="create_time" property="createTime"></result>
 
     </resultMap>

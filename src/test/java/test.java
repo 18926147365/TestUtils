@@ -74,8 +74,7 @@ public class test {
     static int total=1000;
     @Test
     public void Run() throws Exception {
-        Integer a = 1;
-        Assert.assertEquals(1,1);
+       fundTask.notifyTalk(2);
     }
 
     @Autowired

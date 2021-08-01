@@ -44,5 +44,7 @@ public interface FundMapper {
 
     void updateConfirmFundList();
 
+    BigDecimal totalEarAmountWeek(@Param(value = "belongName") String belongName);
 
+    BigDecimal totalEarAmountMonth(@Param(value = "belongName") String belongName);
 }

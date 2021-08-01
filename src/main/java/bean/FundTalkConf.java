@@ -25,5 +25,7 @@ public class FundTalkConf {
 
     private BigDecimal amount;
 
+    private BigDecimal amountMy;
+
     private Date createTime;
 }

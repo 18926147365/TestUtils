@@ -358,7 +358,10 @@ public class FundTask {
             dingMarkDown.add(whichDmk(dear, earAmount.doubleValue())).lineBreak();
             dingMarkDown.add(whichDmk(tear, earTotal.doubleValue())).lineBreak();
             dingMarkDown.add("基金余额：" + totalAmount.setScale(2, RoundingMode.HALF_DOWN) + "元").lineBreak();
-            dingMarkDown.add("涨:" + up + ",跌:" + down).lineBreak();
+            BigDecimal totalEarAmountWeek = fundMapper.totalEarAmountWeek(belongName);
+            BigDecimal totalEarAmountMonth = fundMapper.totalEarAmountMonth(belongName);
+            dingMarkDown.add("本周收益："+whichDmk(formatMoney(totalEarAmountWeek.setScale(2,RoundingMode.HALF_DOWN))+"元",totalEarAmountWeek.doubleValue())).lineBreak();
+            dingMarkDown.add("本月收益："+whichDmk(formatMoney(totalEarAmountMonth.setScale(2,RoundingMode.HALF_DOWN))+"元",totalEarAmountMonth.doubleValue())).lineBreak();
             dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
             dingMarkDown.line("点击查看更多基金信息", "http://42.194.205.61:8082/#/fund/" + fundTalkConf.getBelongId());
 
@@ -402,6 +405,8 @@ public class FundTask {
     private String greeDmk(String content) {
         return "<font color=#21960d  face=\"黑体\">" + content + "</font>";
     }
+
+
 
     private String formatMoney(BigDecimal money) {
         if (money.doubleValue() >= 0) {

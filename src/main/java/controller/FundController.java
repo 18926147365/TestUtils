@@ -121,6 +121,7 @@ public class FundController extends BaseController {
             resp.setPayAmount(payAmount);
             resultList.add(resp);
         }
+        resultList.sort(Comparator.comparing(FundResp::getState));
         return resultList;
     }
 
@@ -146,9 +147,14 @@ public class FundController extends BaseController {
         if (todayEarAmount == null) {
             todayEarAmount = new BigDecimal("0");
         }
+        BigDecimal totalEarAmountWeek = fundMapper.totalEarAmountWeek(belongName);
+        BigDecimal totalEarAmountMonth = fundMapper.totalEarAmountMonth(belongName);
         FundUserResp fundUserResp = new FundUserResp();
+        fundUserResp.setWeekEarAmount(totalEarAmountWeek);
+        fundUserResp.setMonthEarAmount(totalEarAmountMonth);
         fundUserResp.setUserName(belongName);
-        fundUserResp.setCapitalAmount(fundTalkConf.getAmount());//本金
+        fundUserResp.setCapitalAmount(fundTalkConf.getAmount());//持有金额
+        fundUserResp.setCapitalMyAmount(fundTalkConf.getAmountMy());//本金
         fundUserResp.setTotalAmount(totalAmount);
         fundUserResp.setBalanceAmount(balanceFund.getPayAmount());
         fundUserResp.setDealAmount(dealAmount);
@@ -531,7 +537,6 @@ public class FundController extends BaseController {
             allResp.setTotalEarAllAmount(totalEarAllAmount);
             result.add(allResp);
         }
-
         return result;
     }
 

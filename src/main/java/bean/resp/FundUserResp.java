@@ -16,7 +16,9 @@ public class FundUserResp {
 
     private BigDecimal totalAmount;//当前余额
 
-    private BigDecimal capitalAmount;//本金
+    private BigDecimal capitalAmount;//持有金额
+
+    private BigDecimal capitalMyAmount;//本金
 
     private BigDecimal totalCalcAmount;//总收益
 
@@ -27,5 +29,9 @@ public class FundUserResp {
     private BigDecimal dealAmount;//正在交易的金额
 
     private BigDecimal todayEarAmount;//当天总收益
+
+    private BigDecimal weekEarAmount;//本周总收益
+
+    private BigDecimal monthEarAmount;//本月总收益
 
 }
