@@ -194,11 +194,11 @@ public class FundTask {
                 }
                 //当前收益计算
                 fundMapper.updateFund(fund.getId(), fundJson.getBigDecimal("gszzl"), (fundJson.getDate("gztime")));
-                updateEarAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"),fundJson.getBigDecimal("gsz"));
+                updateEarAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"), fundJson.getBigDecimal("gsz"));
                 updateCalcAmount(fund, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
                 updateFundLogToday(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"));
                 if (type == 2) {
-                    updateFundLogDay(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"),fundJson.getBigDecimal("gsz"));
+                    updateFundLogDay(fundCode, fundJson.getDate("gztime"), fundJson.getBigDecimal("gszzl"), fundJson.getBigDecimal("gsz"));
                 }
             }
         }
@@ -215,7 +215,7 @@ public class FundTask {
         fundTodayLogMapper.insert(todayLog);
     }
 
-    private void updateFundLogDay(String fundCode, Date gztime, BigDecimal gszzl,BigDecimal netValue) {
+    private void updateFundLogDay(String fundCode, Date gztime, BigDecimal gszzl, BigDecimal netValue) {
         FundDayLog dayLog = new FundDayLog();
         dayLog.setGszzl(gszzl);
         dayLog.setFundCode(fundCode);
@@ -224,7 +224,7 @@ public class FundTask {
         fundDayLogMapper.insert(dayLog);
     }
 
-    private void updateEarAmount(Fund fund, Date gztime, BigDecimal gszzl,BigDecimal netValue) {
+    private void updateEarAmount(Fund fund, Date gztime, BigDecimal gszzl, BigDecimal netValue) {
         BigDecimal earAmount = fund.getCalcAmount();
         earAmount = earAmount.multiply(gszzl.multiply(new BigDecimal("0.01")));
         fundMapper.updateEarFund(fund.getId(), earAmount, new Date());
@@ -296,8 +296,8 @@ public class FundTask {
                         temp.setEarAmount(temp.getEarAmount().add(fund.getEarAmount()));
                         temp.setPayAmount(temp.getPayAmount().add(fund.getPayAmount()));
                     }
-                }else if(fund.getState() == 2){//卖出确认中
-                    fundTipBuilder.append(buleHui("[卖出确认中]：" + fund.getFundName() + " 持有:"+fund.getCalcAmount().setScale(0,RoundingMode.FLOOR)+"元(预计收益" + fund.getCalcAmount().subtract(fund.getPayAmount()).setScale(0,RoundingMode.FLOOR) + "元)") + "\n\n");
+                } else if (fund.getState() == 2) {//卖出确认中
+                    fundTipBuilder.append(buleHui("[卖出确认中]：" + fund.getFundName() + " 持有:" + fund.getCalcAmount().setScale(0, RoundingMode.FLOOR) + "元(预计收益" + fund.getCalcAmount().subtract(fund.getPayAmount()).setScale(0, RoundingMode.FLOOR) + "元)") + "\n\n");
                 }
             }
 
@@ -359,9 +359,11 @@ public class FundTask {
             dingMarkDown.add(whichDmk(tear, earTotal.doubleValue())).lineBreak();
             dingMarkDown.add("基金余额：" + totalAmount.setScale(2, RoundingMode.HALF_DOWN) + "元").lineBreak();
             BigDecimal totalEarAmountWeek = fundMapper.totalEarAmountWeek(belongName);
+            if (totalEarAmountWeek == null) totalEarAmountWeek = new BigDecimal("0");
             BigDecimal totalEarAmountMonth = fundMapper.totalEarAmountMonth(belongName);
-            dingMarkDown.add("本周收益："+whichDmk(formatMoney(totalEarAmountWeek.setScale(2,RoundingMode.HALF_DOWN))+"元",totalEarAmountWeek.doubleValue())).lineBreak();
-            dingMarkDown.add("本月收益："+whichDmk(formatMoney(totalEarAmountMonth.setScale(2,RoundingMode.HALF_DOWN))+"元",totalEarAmountMonth.doubleValue())).lineBreak();
+            if (totalEarAmountMonth == null) totalEarAmountMonth = new BigDecimal("0");
+            dingMarkDown.add("本周收益：" + whichDmk(formatMoney(totalEarAmountWeek.setScale(2, RoundingMode.HALF_DOWN)) + "元", totalEarAmountWeek.doubleValue())).lineBreak();
+            dingMarkDown.add("本月收益：" + whichDmk(formatMoney(totalEarAmountMonth.setScale(2, RoundingMode.HALF_DOWN)) + "元", totalEarAmountMonth.doubleValue())).lineBreak();
             dingMarkDown.add(fundTipBuilder.toString()).lineBreak();
             dingMarkDown.line("点击查看更多基金信息", "http://42.194.205.61:8082/#/fund/" + fundTalkConf.getBelongId());
 
@@ -393,6 +395,7 @@ public class FundTask {
     private static String buleDmk(String content) {
         return "<font color=#003e9f  face=\"黑体\">" + content + "</font>";
     }
+
     private static String buleHui(String content) {
         return "<font color=#9007c1  face=\"黑体\">" + content + "</font>";
     }
@@ -405,7 +408,6 @@ public class FundTask {
     private String greeDmk(String content) {
         return "<font color=#21960d  face=\"黑体\">" + content + "</font>";
     }
-
 
 
     private String formatMoney(BigDecimal money) {
