@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import service.TestService;
 import utils.CsvUtils;
+import utils.OcrUtils;
 import utils.RedisLuaUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,27 +42,30 @@ public class GsController {
     @GetMapping("/start")
     public void start() throws Exception {
         while (run){
-            Thread.sleep(2000);
+            Thread.sleep(3000);
             // 获取窗口句柄
             WinDef.HWND hwnd = User32.INSTANCE.GetForegroundWindow();
             if (hwnd != null) {
                 int len = User32.INSTANCE.GetWindowTextLength(hwnd);
                 char[] chars = new char[len];
                 User32.INSTANCE.GetWindowText(hwnd,chars,len+1);
-                System.out.println("窗口标题:"+String.valueOf(chars));
+                String title = String.valueOf(chars);
                 // 获取窗口大小
                 WinDef.RECT rect = new WinDef.RECT();
                 User32.INSTANCE.GetWindowRect(hwnd, rect);
                 int width = rect.right - rect.left;
                 int height = rect.bottom - rect.top;
-                System.out.println("窗口大小: " + width + "x" + height);
+
 
                 // 获取窗口坐标
                 WinDef.POINT point = new WinDef.POINT();
                 User32.INSTANCE.GetCursorPos(point);
-                System.out.println("窗口坐标: (" + point.x + ", " + point.y + ")");
-
-
+                System.out.println("窗口标题:"+title);
+                System.out.println("窗口大小: " + width + "x" + height);
+                System.out.println("left:"+ rect.left +"  right:"+rect.right +"  top:"+rect.top+"  bottom:"+ rect.bottom );
+                System.out.println("鼠标当前位置: (" + point.x + ", " + point.y + ")");
+                System.out.println();
+                OcrUtils.capture(rect.left,rect.top,width,height);
             } else {
                 System.out.println("找不到窗口");
             }
