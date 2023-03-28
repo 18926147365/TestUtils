@@ -45,9 +45,10 @@ public class GsController {
             // 获取窗口句柄
             WinDef.HWND hwnd = User32.INSTANCE.GetForegroundWindow();
             if (hwnd != null) {
-                char[] chars = new char[10];
-                User32.INSTANCE.GetWindowText(hwnd,chars,10);
-                System.out.println("窗口标题");
+                int len = User32.INSTANCE.GetWindowTextLength(hwnd);
+                char[] chars = new char[len];
+                User32.INSTANCE.GetWindowText(hwnd,chars,len+1);
+                System.out.println("窗口标题:"+String.valueOf(chars));
                 // 获取窗口大小
                 WinDef.RECT rect = new WinDef.RECT();
                 User32.INSTANCE.GetWindowRect(hwnd, rect);
