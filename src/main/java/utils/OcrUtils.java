@@ -2,6 +2,9 @@ package utils;
 
 import com.sun.jna.platform.win32.User32;
 import com.sun.jna.platform.win32.WinDef;
+import net.sourceforge.tess4j.ITesseract;
+import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -34,6 +37,20 @@ public class OcrUtils {
         } else {
             System.out.println("找不到窗口");
         }
+    }
+
+    public static String doOCR(BufferedImage image) throws TesseractException {
+        //创建Tesseract对象
+        ITesseract tesseract = new Tesseract();
+        //设置中文字体库路径
+        tesseract.setDatapath("classpath:tessdata/");
+        //中文识别
+        tesseract.setLanguage("chi_sim");
+        //执行ocr识别
+        String result = tesseract.doOCR(image);
+        //替换回车和tal键  使结果为一行
+        result = result.replaceAll("\\r|\\n", "-").replaceAll(" ", "");
+        return result;
     }
 
     public static void capture(int x, int y, int width, int height) throws Exception {
