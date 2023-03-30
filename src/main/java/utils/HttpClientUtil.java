@@ -2,7 +2,6 @@ package utils;
 
 import com.alibaba.fastjson.JSONObject;
 
-import jdk.nashorn.internal.scripts.JO;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.*;

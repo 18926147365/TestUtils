@@ -4,7 +4,6 @@ import bean.User;
 import bean.UserInfo;
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.hash.BloomFilter;
-import com.sun.corba.se.spi.orbutil.threadpool.ThreadPoolManager;
 import lombok.extern.slf4j.Slf4j;
 import mapper.UserMapper;
 import org.apache.commons.lang3.StringUtils;

@@ -19,8 +19,25 @@
     </parent>
 
 
-
     <dependencies>
+        <!-- https://mvnrepository.com/artifact/com.sikulix/sikulixapi -->
+<!--        <dependency>-->
+<!--            <groupId>com.sikulix</groupId>-->
+<!--            <artifactId>sikulixapi</artifactId>-->
+<!--            <version>1.1.0</version>-->
+<!--        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/com.sikulix/sikulixlibswin -->
+        <!-- 这里是Windows版本，其他系统版本选择参考 https://mvnrepository.com/artifact/com.sikulix -->
+        <dependency>
+            <groupId>com.sikulix</groupId>
+            <artifactId>sikulixlibsmac</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>net.imagej</groupId>-->
+<!--            <artifactId>ij</artifactId>-->
+<!--            <version>1.49m</version>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>cn.hutool</groupId>
