@@ -3,9 +3,7 @@ package utils;
 import cn.hutool.core.swing.RobotUtil;
 import cn.hutool.core.swing.ScreenUtil;
 import cn.hutool.core.text.finder.Finder;
-import org.sikuli.script.Match;
-import org.sikuli.script.Screen;
-import org.sikuli.script.ScreenImage;
+import org.sikuli.script.*;
 
 
 import javax.imageio.ImageIO;
@@ -31,12 +29,19 @@ public class QQTest {
 //        BufferedImage image = ImageIO.read(new File(path));
 //        int height = image.getHeight();
 //        int width = image.getWidth();
-        Screen screen = new Screen();
+
+            Region region = Region.grow(new Location(1,1),300,400);
+            System.out.println(region.exists("/Users/lihaoming/Desktop/55.png"));
+            Thread.sleep(2000);
+
+
+//        Screen screen = new Screen();
+
 //        ScreenImage capture = screen.capture();
 //        capture.save("/Users/lihaoming/Desktop");
-        Match match = screen.exists("/Users/lihaoming/Desktop/55.png");
-        System.out.println(match.x+","+match.y);
-        RobotUtil.mouseMove(match.x,match.y);
+//        Match match = screen.exists("/Users/lihaoming/Desktop/55.png");
+//        System.out.println(match.x+","+match.y);
+//        RobotUtil.mouseMove(114,match.y);
 //        RobotUtil.mouseMove(match.x,match.y);
 //        String path2 = "/Users/lihaoming/Desktop/2.png";
 //        BufferedImage image2 = ImageIO.read(new File(path2));
