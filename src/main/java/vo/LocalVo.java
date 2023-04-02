@@ -12,7 +12,7 @@ import java.math.RoundingMode;
  */
 @Data
 public class LocalVo {
-    static final double FBL = 1.25;
+    static final double FBL = 1;
 
 
     private Integer x;
