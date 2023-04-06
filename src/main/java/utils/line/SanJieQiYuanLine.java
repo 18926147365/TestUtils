@@ -10,6 +10,7 @@ import vo.LocalVo;
 public class SanJieQiYuanLine {
 
     public static void run() throws Exception {
+        System.out.println("三界奇缘-开始");
         SikuliUtils.findAndClickAct("日常活动-三界奇缘");
         ThreadUtil.sleep(3000);
         LocalVo localVo = WinDefUtils.getLocalVo();

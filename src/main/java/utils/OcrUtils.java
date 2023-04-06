@@ -1,22 +1,33 @@
 package utils;
 
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.swing.RobotUtil;
-import cn.hutool.core.thread.ThreadUtil;
-import com.sun.jna.platform.win32.User32;
-import com.sun.jna.platform.win32.WinDef;
+import com.alibaba.fastjson.JSONObject;
 import net.sourceforge.tess4j.ITesseract;
 import net.sourceforge.tess4j.Tesseract;
 import net.sourceforge.tess4j.TesseractException;
+import okhttp3.*;
+import org.sikuli.script.ScreenImage;
+import vo.LocalVo;
+
+import java.io.*;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+
 import java.awt.image.BufferedImage;
+
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author lihaoming
@@ -26,86 +37,102 @@ import java.util.Map;
 public class OcrUtils {
 
 
-    public static void main(String[] args) throws Exception {
-        int i =0;
-        while (true){
-            ThreadUtil.sleep(20000);
-            delAll();
-            ThreadUtil.sleep(2000);
-            红手指截图();
-            ThreadUtil.sleep(20000);
-            String path = "C:\\Program Files (x86)\\RedFingerPro\\ScreenShot\\32934127\\VM010088150145";
-            File delFiles = new File(path);
+    static String ACCESS_TOKEN = "24.62d7ae480303bcb87ac1fb3da3c93038.2592000.1683382703.282335-32076196";
 
-            for (File file : delFiles.listFiles()) {
-                boolean done = 抓鬼一轮完成(file);
-                System.out.println(DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss")+"第"+(++i)+"次判断一轮抓鬼是否完成:"+done);
-                if(done){
-                    红手指执行抓鬼();
-                    ThreadUtil.sleep(120000);
-                    break;
-                }
+    static Long lastDate = null;
+    static final OkHttpClient HTTP_CLIENT = new OkHttpClient().newBuilder().build();
+
+
+    public static void main(String []args) throws Exception{
+        System.out.println(getNameAndLevel());
+    }
+
+    public static String getNameAndLevel() throws Exception{
+        SikuliUtils.openJs();
+        LocalVo localVo = WinDefUtils.getLocalVo();
+        int x = localVo.getFblx() + 203;
+        int y = localVo.getFbly() + 167;
+        ScreenImage capture = SikuliUtils.screen.capture(x, y, 246, 38);
+        List<String> baiduText = getBaiduText(capture.getFile());
+        if(CollUtil.isNotEmpty(baiduText)){
+            return baiduText.get(0).replace(",","");
+        }
+        return "";
+    }
+
+    public static String getMoney() throws Exception{
+        SikuliUtils.openBB();
+        LocalVo localVo = WinDefUtils.getLocalVo();
+        int x = localVo.getFblx() + 124;
+        int y = localVo.getFbly() + 662;
+        ScreenImage capture = SikuliUtils.screen.capture(x, y, 114, 30);
+        List<String> baiduText = getBaiduText(capture.getFile());
+        if(CollUtil.isNotEmpty(baiduText)){
+            return baiduText.get(0).replace(",","");
+        }
+        return "";
+    }
+
+    public static List<String> getBaiduText(String fileName){
+        List<String> result = null;
+        try {
+            MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
+            String fileContentAsBase64 = getFileContentAsBase64Urlencoded(fileName);
+            fileContentAsBase64= "image="+fileContentAsBase64;
+            RequestBody body = RequestBody.create(mediaType,fileContentAsBase64 );
+            Request request = new Request.Builder()
+                    .url("https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic?access_token="+getBaiduAccessToken())
+                    .method("POST", body)
+                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
+                    .addHeader("Accept", "application/json")
+                    .build();
+            Response response = HTTP_CLIENT.newCall(request).execute();
+            //words_result
+            JSONObject re = JSONObject.parseObject(response.body().string());
+            System.out.println(re);
+            List<String> wordsResult = Convert.toList(String.class, re.getJSONArray("words_result"));
+            result = new ArrayList<>();
+            for (String s : wordsResult) {
+                JSONObject j = JSONObject.parseObject(s);
+                result.add(j.getString("words"));
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return result;
 
     }
-    public static void delAll(){
-        String path = "C:\\Program Files (x86)\\RedFingerPro\\ScreenShot\\32934127\\VM010088150145";
-        File delFiles = new File(path);
-        for (File file : delFiles.listFiles()) {
-            file.delete();
-        }
-    }
 
-    public static void 红手指执行抓鬼(){
-        System.out.println("开始执行脚本");
-        ThreadUtil.sleep(2500);
-        WinDef.HWND hwnd = User32.INSTANCE.FindWindow(null, "红手指专业版");
-        if (hwnd != null) {
-            // 获取窗口大小
-            WinDef.RECT rect = new WinDef.RECT();
-            User32.INSTANCE.GetWindowRect(hwnd, rect);
-            ThreadUtil.sleep(1500);
-            User32.INSTANCE.SetCursorPos(rect.left+622,rect.top+173);
-            ThreadUtil.sleep(1500);
-            RobotUtil.click();
-            ThreadUtil.sleep(1500);
-            User32.INSTANCE.SetCursorPos(rect.left+768,rect.top+230);
-            ThreadUtil.sleep(1500);
-            RobotUtil.click();
-            System.out.println("执行完成脚本");
+
+    public static String getBaiduAccessToken() throws Exception {
+        if (lastDate == null || new Date().getTime() > lastDate) {
+            MediaType mediaType = MediaType.parse("application/json");
+            RequestBody body = RequestBody.create(mediaType, "");
+            Request request = new Request.Builder()
+                    .url("https://aip.baidubce.com/oauth/2.0/token?client_id=Mq9w2lGMvDeEGTT30766FhrR&client_secret=MHbOF7comruspL43ZF2Cq7Q0coybxj6v&grant_type=client_credentials")
+                    .method("POST", body)
+                    .addHeader("Content-Type", "application/json")
+                    .addHeader("Accept", "application/json")
+                    .build();
+            Response response = HTTP_CLIENT.newCall(request).execute();
+            JSONObject data = JSONObject.parseObject(response.body().string());
+            String accessToken = data.getString("access_token");
+            DateTime dateTime = DateUtil.offsetHour(new Date(), 12);
+            lastDate = dateTime.getTime();
+            ACCESS_TOKEN = new String(accessToken);
+            return accessToken;
         } else {
-            System.out.println("找不到窗口");
+            return ACCESS_TOKEN;
         }
+
     }
 
-    public static void 红手指截图(){
-        // 获取窗口句柄
-        WinDef.HWND hwnd = User32.INSTANCE.FindWindow(null, "V1-3");
-        if (hwnd != null) {
-            // 获取窗口大小
-            WinDef.RECT rect = new WinDef.RECT();
-            User32.INSTANCE.GetWindowRect(hwnd, rect);
-            User32.INSTANCE.SetCursorPos(rect.right-20,rect.top+100);
-            RobotUtil.click();
-        } else {
-            System.out.println("找不到窗口");
-        }
-    }
 
-    public static boolean 抓鬼一轮完成(File file) throws Exception {
-        String path = "C:\\Users\\Administrator\\Desktop\\抓鬼一轮完成.png";
-        BufferedImage image = ImageIO.read(new File(path));
-        int x1=438,y1=333,x2=831,y2=333;
-        BufferedImage image2 = ImageIO.read(file);
-        for(int i =x1;i<x2;i++){
-            int rgb = image.getRGB( i, y1);
-            int rgb1 = image2.getRGB( i, y1);
-            if(rgb1 != rgb){
-                return false;
-            }
-        }
-        return true;
+    public static String getText(String name) throws Exception {
+
+        BufferedImage image = ImageIO.read(new File(SikuliUtils.PATH + name + ".png"));
+
+        return doOCR(image);
     }
 
     public static String doOCR(BufferedImage image) throws TesseractException {
@@ -122,39 +149,26 @@ public class OcrUtils {
         return result;
     }
 
-    public static void capture(int x, int y, int width, int height) throws Exception {
-        //创建一个robot对象
-        Robot robot = new Robot();
-        //获取屏幕分辨率
-        Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-        //打印屏幕分辨率
-        //创建该分辨率的矩形对象
-        Rectangle screenRect = new Rectangle(d);
-        //根据这个矩形截图
-        screenRect.setRect(x, y, width, height);
-        BufferedImage bufferedImage = robot.createScreenCapture(screenRect);
-        //保存截图
-        File file = new File("C:\\Users\\Administrator\\Desktop\\img\\1.png");
-        ImageIO.write(bufferedImage, "png", file);
+    /**
+     * 获取文件base64编码
+     * @param path 文件路径
+     * @return base64编码信息，不带文件头
+     * @throws IOException IO异常
+     */
+    static String getFileContentAsBase64(String path) throws IOException {
+        byte[] b = Files.readAllBytes(Paths.get(path));
+        return Base64.getEncoder().encodeToString(b);
+    }
+    /**
+     * 获取文件base64 UrlEncode编码
+     * @param path 文件路径
+     * @return base64编码信息，不带文件头
+     * @throws IOException IO异常
+     */
+    static String getFileContentAsBase64Urlencoded(String path) throws IOException {
+        return URLEncoder.encode(getFileContentAsBase64(path), "utf-8");
     }
 
-    private void tt(){
-        // 获取窗口句柄
-        WinDef.HWND hwnd = User32.INSTANCE.FindWindow(null, "窗口标题");
-        if (hwnd != null) {
-            // 获取窗口大小
-            WinDef.RECT rect = new WinDef.RECT();
-            User32.INSTANCE.GetWindowRect(hwnd, rect);
-            int width = rect.right - rect.left;
-            int height = rect.bottom - rect.top;
-            System.out.println("窗口大小: " + width + "x" + height);
 
-            // 获取窗口坐标
-            WinDef.POINT point = new WinDef.POINT();
-            User32.INSTANCE.GetCursorPos(point);
-            System.out.println("窗口坐标: (" + point.x + ", " + point.y + ")");
-        } else {
-            System.out.println("找不到窗口");
-        }
-    }
+
 }
