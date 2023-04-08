@@ -1,4 +1,4 @@
-import bean.AwardType;
+
 import bean.BinTree;
 import bean.User;
 import com.alibaba.fastjson.JSONObject;
@@ -7,7 +7,7 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnels;
 import com.sun.management.GcInfo;
 import io.lettuce.core.ScriptOutputType;
-import javafx.scene.paint.Stop;
+
 import javassist.*;
 import javassist.bytecode.MethodInfo;
 import org.apache.commons.lang.ObjectUtils;
