@@ -40,84 +40,12 @@ import java.util.function.Supplier;
 public class GsController {
 
     static boolean run = true;
+    @Autowired
+    private RedisLuaUtils redisLuaUtils;
 
     @GetMapping("/start")
     public void start() throws Exception {
-        while (run){
-            Thread.sleep(3000);
-            // 获取窗口句柄
-            WinDef.HWND hwnd = User32.INSTANCE.GetForegroundWindow();
-            if (hwnd != null) {
-                int len = User32.INSTANCE.GetWindowTextLength(hwnd);
-                char[] chars = new char[len];
-                User32.INSTANCE.GetWindowText(hwnd,chars,len+1);
-                String title = String.valueOf(chars);
-                // 获取窗口大小
-                WinDef.RECT rect = new WinDef.RECT();
-                User32.INSTANCE.GetWindowRect(hwnd, rect);
-                int width = rect.right - rect.left;
-                int height = rect.bottom - rect.top;
-
-
-                // 获取窗口坐标
-                WinDef.POINT point = new WinDef.POINT();
-                User32.INSTANCE.GetCursorPos(point);
-                System.out.println("窗口标题:"+title);
-                System.out.println("窗口大小: " + width + "x" + height);
-                System.out.println("left:"+ rect.left +"  right:"+rect.right +"  top:"+rect.top+"  bottom:"+ rect.bottom );
-                System.out.println("鼠标当前位置: (" + point.x + ", " + point.y + ")");
-                System.out.println();
-
-                BufferedImage capture = capture(hwnd);
-                System.out.println(OcrUtils.doOCR(capture));
-
-            } else {
-                System.out.println("找不到窗口");
-            }
-        }
-    }
-
-
-    public BufferedImage capture(WinDef.HWND hWnd) {
-
-        WinDef.HDC hdcWindow = User32.INSTANCE.GetDC(hWnd);
-        WinDef.HDC hdcMemDC = GDI32.INSTANCE.CreateCompatibleDC(hdcWindow);
-
-        WinDef.RECT rect = new WinDef.RECT();
-        User32.INSTANCE.GetWindowRect(hWnd, rect);
-        int width = rect.right - rect.left;
-        int height = rect.bottom - rect.top;
-
-
-
-        WinDef.HBITMAP hBitmap = GDI32.INSTANCE.CreateCompatibleBitmap(hdcWindow, width, height);
-
-        WinNT.HANDLE hOld = GDI32.INSTANCE.SelectObject(hdcMemDC, hBitmap);
-
-        GDI32.INSTANCE.BitBlt(hdcMemDC, 0, 0, width, height, hdcWindow, 0, 0, GDI32.SRCCOPY);
-        GDI32.INSTANCE.SelectObject(hdcMemDC, hOld);
-        GDI32.INSTANCE.DeleteDC(hdcMemDC);
-
-        WinGDI.BITMAPINFO bmi = new WinGDI.BITMAPINFO();
-        bmi.bmiHeader.biWidth = width;
-        bmi.bmiHeader.biHeight = -height;
-        bmi.bmiHeader.biPlanes = 1;
-        bmi.bmiHeader.biBitCount = 32;
-        bmi.bmiHeader.biCompression = WinGDI.BI_RGB;
-
-        Memory buffer = new Memory(width * height * 4);
-        GDI32.INSTANCE.GetDIBits(hdcWindow, hBitmap, 0, height, buffer, bmi, WinGDI.DIB_RGB_COLORS);
-
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        image.setRGB(0, 0, width, height, buffer.getIntArray(0, width * height), 0, width);
-
-        GDI32.INSTANCE.DeleteObject(hBitmap);
-        User32.INSTANCE.ReleaseDC(hWnd, hdcWindow);
-
-        return image;
 
     }
-
-
 
 }

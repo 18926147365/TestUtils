@@ -6,7 +6,7 @@ import com.google.common.base.Stopwatch;
 import io.lettuce.core.ScriptOutputType;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.api.sync.RedisScriptingCommands;
-import javafx.scene.paint.Stop;
+
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
