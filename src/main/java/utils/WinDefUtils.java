@@ -23,7 +23,16 @@ public class WinDefUtils {
 
 
     public static void main(String[] args)throws Exception {
-        capture("capture");
+//        capture("capture");
+        //当前967,237
+        getLocalPoint();
+
+    }
+
+    public static void getLocalPoint(){
+        LocalVo localVo = getLocalVo();
+        Point point=MouseInfo.getPointerInfo().getLocation();
+        System.out.println((point.x-localVo.getFblx())+","+ (point.y-localVo.getFbly()));
     }
 
     public static LocalVo getLocalVo(){
@@ -41,7 +50,7 @@ public class WinDefUtils {
             localVo.setY((rect.top));
             localVo.setWidth((rect.right- rect.left));
             localVo.setHeight((rect.bottom- rect.top));
-            RobotUtil.mouseMove(localVo.getX(),localVo.getY());
+//            RobotUtil.mouseMove(localVo.getX(),localVo.getY());
             return localVo;
         } else {
             System.out.println("找不到窗口");

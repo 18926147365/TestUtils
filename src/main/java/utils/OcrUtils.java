@@ -44,7 +44,7 @@ public class OcrUtils {
 
 
     public static void main(String []args) throws Exception{
-        System.out.println(getNameAndLevel());
+        System.out.println(getMoney());
     }
 
     public static String getNameAndLevel() throws Exception{
@@ -70,6 +70,7 @@ public class OcrUtils {
         if(CollUtil.isNotEmpty(baiduText)){
             return baiduText.get(0).replace(",","");
         }
+        SikuliUtils.escClick();
         return "";
     }
 

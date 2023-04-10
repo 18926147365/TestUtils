@@ -43,6 +43,19 @@ public class SikuliUtils {
         }
     }
 
+    public static void mouseMove(int x,int y) {
+        ThreadUtil.sleep(500);
+        LocalVo localVo = WinDefUtils.getLocalVo();
+        RobotUtil.mouseMove(localVo.getFblx()+x,localVo.getFbly()+y);
+    }
+    public static void moveAndClick(int x,int y) {
+        mouseMove(x,y);
+        ThreadUtil.sleep(500);
+        RobotUtil.click();
+        ThreadUtil.sleep(500);
+    }
+
+
     public static Match findAndClickAct(String name) throws Exception {
         Match match = findAct(name);
         RobotUtil.mouseMove(match.x + match.w - 50, match.y + match.h / 2);

@@ -15,14 +15,14 @@ public class AllLine {
             }
         });
         //三界奇缘
-       SanJieQiYuanLine.run();
+        SanJieQiYuanLine.run();
 //        宝图
-       BaoTuLine.run();
+        BaoTuLine.run();
         //秘境降妖
         MiJingXIangYaoLine.run();
 //        //押镖
         YunBiaoLine.run();
         //科举乡试
-     //   KeJuXiangShi.run();
+        // KeJuXiangShi.run();
     }
 }
